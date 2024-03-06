@@ -1,0 +1,10 @@
+{
+    "Name": "SVAssistant",
+    "Author": "Allan Cerveaux",
+    "Version": "0.0.1",
+    "Description": "In game assistant schedule task or else",
+    "UniqueID": "callan.sv-assistant",
+    "EntryDll": "SVAssistant.dll",
+    "MinimumApiVersion": "3.0.0",
+    "UpdateKeys": []
+  }
