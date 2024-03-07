@@ -90,49 +90,5 @@ namespace Rest
 				}
 			}
 		}
-
-		private static void Health(HttpListenerRequest request, HttpListenerResponse response)
-		{
-			switch (request.HttpMethod)
-			{
-				case "GET":
-					response.ContentType = "application/json";
-
-					var responseBody = JsonConvert.SerializeObject(new { alive = true });
-					var buffer = Encoding.UTF8.GetBytes(responseBody);
-					response.ContentLength64 = buffer.Length;
-					response.OutputStream.Write(buffer, 0, buffer.Length);
-					break;
-			}
-		}
-
-		private static void GetCurrentPlayer(
-			HttpListenerRequest request,
-			HttpListenerResponse response
-		)
-		{
-			switch (request.HttpMethod)
-			{
-				case "GET":
-					var farmer = new
-					{
-						name = Game1.player.Name,
-						money = Game1.player.Money,
-						jobs = new
-						{
-							farmer = Game1.player.FarmingLevel,
-							fishing = Game1.player.FishingLevel,
-							mining = Game1.player.MiningLevel,
-							foraging = Game1.player.ForagingLevel,
-							combat = Game1.player.CombatLevel,
-						}
-					};
-					var responseBody = JsonConvert.SerializeObject(farmer);
-					var buffer = Encoding.UTF8.GetBytes(responseBody);
-					response.ContentLength64 = buffer.Length;
-					response.OutputStream.Write(buffer, 0, buffer.Length);
-					break;
-			}
-		}
 	}
 }
