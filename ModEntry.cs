@@ -3,7 +3,6 @@ using Rest;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-using SVAssistant.Famer;
 using SVAssistant.Framework;
 
 namespace SVAssistant
@@ -64,7 +63,10 @@ namespace SVAssistant
 
 		public void LoadApiRoutes()
 		{
-			Server.routes.Get("/current-farmer", FarmerController.HandleGetFarmer);
+			Server.routes.Get(
+				"/current-farmer",
+				Api.FarmerController.HandleGetFarmer(Game1.player)
+			);
 		}
 	}
 }
