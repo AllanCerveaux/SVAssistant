@@ -8,7 +8,8 @@ public class JsonWebToken
 	/// <summary>
 	/// Gets the secret key used for signing JWT tokens.
 	/// </summary>
-    private static string secret => Environment.GetEnvironmentVariable("JWT_SECRET") ?? Guid.NewGuid().ToString();
+	private static string secret =>
+		Environment.GetEnvironmentVariable("JWT_SECRET") ?? Guid.NewGuid().ToString();
 
 	/// <summary>
 	/// Signs and generates a JWT token with specified claims.
@@ -19,9 +20,7 @@ public class JsonWebToken
 	/// <returns>A signed JWT token as a string.</returns>
 	public static string Sign(string sub, string uniqueName, string audiance)
 	{
-		var key = new SymmetricSecurityKey(
-			Encoding.UTF8.GetBytes(secret)
-		);
+		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
 		var credential = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
 		var claims = new[]
@@ -52,9 +51,7 @@ public class JsonWebToken
 	/// </remarks>
 	public static ClaimsPrincipal Verify(string token)
 	{
-		var key = new SymmetricSecurityKey(
-			Encoding.UTF8.GetBytes(secret)
-		);
+		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
 		var tokenValidationParameters = new TokenValidationParameters
 		{
 			ValidateIssuerSigningKey = true,

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 
 namespace Rest
 {
@@ -77,7 +78,7 @@ namespace Rest
 		{
 			_response.ContentType = "application/json";
 			_response.StatusCode = stausCode;
-			var jsonResponse =  System.Text.Json.JsonSerializer.Serialize(data);
+			var jsonResponse = JsonSerializer.Serialize(data);
 			var buffer = Encoding.UTF8.GetBytes(jsonResponse);
 			_response.ContentLength64 = buffer.Length;
 			_response.OutputStream.Write(buffer, 0, buffer.Length);

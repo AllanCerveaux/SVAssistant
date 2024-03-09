@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 
 namespace Rest
 {
@@ -46,9 +47,9 @@ namespace Rest
 
 		private static async Task MainLoop()
 		{
-			if(!_keepGoing)
+			if (!_keepGoing)
 				_keepGoing = true;
-			
+
 			Listener.Start();
 			while (_keepGoing)
 			{
@@ -82,7 +83,7 @@ namespace Rest
 					response.StatusCode = (int)HttpStatusCode.InternalServerError;
 					response.ContentType = "application/json";
 					var buffer = Encoding.UTF8.GetBytes(
-						System.Text.Json.JsonSerializer.Serialize(new { error = "Bad request" })
+						JsonSerializer.Serialize(new { error = "Bad request" })
 					);
 					response.ContentLength64 = buffer.Length;
 					response.OutputStream.Write(buffer, 0, buffer.Length);
