@@ -4,12 +4,17 @@
     <AssemblyName>SVAssistant</AssemblyName>
     <RootNamespace>SVAssistant</RootNamespace>
     <TargetFramework>net5.0</TargetFramework>
+    <BundleExtraAssemblies>All</BundleExtraAssemblies>
+    
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.4.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.4.0" />
   </ItemGroup>
 </Project>
