@@ -7,7 +7,6 @@
 ## Requirements
 
 - `dotnet`: `Net5.0`
-- `Newtonsoft.Json`: `13.0.3` (which should be removed to use `System.text.JSON` to avoid unnecessary dependencies)
 - `SMAPI`: `4.1.1`
 
 ## Objective
