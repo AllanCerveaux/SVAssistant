@@ -32,7 +32,8 @@ namespace SVAssistant.Api
 			return (
 				HttpListenerRequest request,
 				RouteHttpResponse response,
-				HttpListenerContext? context
+				HttpListenerContext? context,
+				bool RequireAuthentication
 			) => response.Json(FarmerEntity.GetFarmerDTO(farmer));
 		}
 	}
