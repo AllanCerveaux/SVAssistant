@@ -9,7 +9,7 @@ public class JsonWebToken
 	/// Gets the secret key used for signing JWT tokens.
 	/// </summary>
 	private static string secret =>
-		Environment.GetEnvironmentVariable("JWT_SECRET") ?? Guid.NewGuid().ToString();
+		Environment.GetEnvironmentVariable("JWT_SECRET");
 
 	/// <summary>
 	/// Signs and generates a JWT token with specified claims.
@@ -18,7 +18,7 @@ public class JsonWebToken
 	/// <param name="uniqueName">A unique name claim that provides a unique identifier for the user.</param>
 	/// <param name="audience">The audience claim identifying the recipients that the JWT is intended for.</param>
 	/// <returns>A signed JWT token as a string.</returns>
-	public static string Sign(string sub, string uniqueName, string audiance)
+	public static string Sign(string sub, string uniqueName, string audiance, bool admin)
 	{
 		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
 		var credential = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -28,6 +28,7 @@ public class JsonWebToken
 			new Claim(JwtRegisteredClaimNames.Sub, sub),
 			new Claim(JwtRegisteredClaimNames.UniqueName, uniqueName),
 			new Claim(JwtRegisteredClaimNames.Aud, audiance),
+			new Claim("admin", admin.ToString()),
 			new Claim(JwtRegisteredClaimNames.Exp, DateTime.Now.AddDays(7).ToString()),
 			new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
 		};
