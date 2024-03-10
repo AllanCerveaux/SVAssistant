@@ -8,7 +8,7 @@ namespace Rest
 		HttpListenerRequest request,
 		RouteHttpResponse response,
 		HttpListenerContext? context,
-		bool RequireAuthentication = false
+		bool RequireAuthentication = false 
 	);
 
 	internal class Routes
@@ -22,12 +22,12 @@ namespace Rest
 			routes.Add(route);
 		}
 
-		public void Get(string path, HttpRouteAction action, bool requireAuthentication)
+		public void Get(string path, HttpRouteAction action, bool requireAuthentication = false)
 		{
 			Add(new Route(path, action, HttpMethod.Get, requireAuthentication));
 		}
 
-		public void Post(string path, HttpRouteAction action, bool requireAuthentication)
+		public void Post(string path, HttpRouteAction action, bool requireAuthentication = false)
 		{
 			Add(new Route(path, action, HttpMethod.Post, requireAuthentication));
 		}
@@ -54,54 +54,50 @@ namespace Rest
 				return;
 			}
 
-			if (!isRateLimitExeeded(Request.RemoteEndPoint.Address.ToString()))
+			if(!isRateLimitExeeded(Request.RemoteEndPoint.Address.ToString()))
 			{
 				routeHttpResponse.Error(HttpStatusCode.TooManyRequests, "Too Many Resquests");
 				return;
 			}
 
-			if (route.RequireAuthentication && isTokenValid())
+			if(route.RequireAuthentication && isTokenValid())
 			{
+
 				routeHttpResponse.Error(HttpStatusCode.Unauthorized, "Token Invalid or Expire");
 				return;
 			}
-
+			
 			route.Action(Request, routeHttpResponse, context);
 		}
 
-		private static void HeaderConfiguration(
-			string CorsOrigin = "*",
-			string CorsMethods = "GET, POST"
-		)
+		private static void HeaderConfiguration(string CorsOrigin = "*", string CorsMethods = "GET, POST")
 		{
 			Response.Headers.Add("Access-Control-Allow-Origin", CorsOrigin);
 			Response.Headers.Add("Access-Control-Allow-Methods", CorsMethods);
 		}
 
-		private readonly Dictionary<string, RequestInfo> _rateLimitingDic =
-			new Dictionary<string, RequestInfo>();
-
+		private readonly Dictionary<string, RequestInfo> _rateLimitingDic = new Dictionary<string, RequestInfo>();
 		// @TODO: Change this arbitary value.
 		private const int Limit = 100;
 		private readonly TimeSpan ResetPeriod = TimeSpan.FromHours(1);
 
 		private bool isRateLimitExeeded(string ipAddr)
 		{
-			if (_rateLimitingDic.ContainsKey(ipAddr))
+			if(_rateLimitingDic.ContainsKey(ipAddr))
 			{
-				_rateLimitingDic[ipAddr] = new RequestInfo { Count = 1, LastRest = DateTime.Now };
+				_rateLimitingDic[ipAddr] = new RequestInfo {Count = 1, LastRest = DateTime.Now};
 				return false;
 			}
 
 			var info = _rateLimitingDic[ipAddr];
-			if ((DateTime.Now - info.LastRest) > ResetPeriod)
+			if((DateTime.Now - info.LastRest) > ResetPeriod)
 			{
 				info.Count = 1;
 				info.LastRest = DateTime.Now;
 				return false;
 			}
 
-			if (info.Count >= Limit)
+			if(info.Count >= Limit)
 			{
 				return true;
 			}
@@ -110,10 +106,10 @@ namespace Rest
 			return false;
 		}
 
-		private bool isTokenValid()
+		private bool isTokenValid() 
 		{
 			bool isValid;
-			_ = Middleware.JWTMiddleware.VerifyJWT(Request, out isValid);
+			var jwtMiddleware = Middleware.JWTMiddleware.VerifyJWT(Request, out isValid);
 
 			return isValid;
 		}
@@ -126,12 +122,7 @@ namespace Rest
 		public HttpRouteAction Action { get; }
 		public bool RequireAuthentication { get; }
 
-		public Route(
-			string path,
-			HttpRouteAction action,
-			HttpMethod method,
-			bool requireAuth = false
-		)
+		public Route(string path, HttpRouteAction action, HttpMethod method, bool requireAuth = false)
 		{
 			this.Path = path;
 			this.Action = action;
@@ -174,7 +165,7 @@ namespace Rest
 
 	public class RequestInfo
 	{
-		public int Count { get; set; }
-		public DateTime LastRest { get; set; }
+		public int Count {get; set;}
+		public DateTime LastRest {get; set;}
 	}
 }
