@@ -8,13 +8,11 @@ namespace SVAssistant.Rest
 		HttpListenerRequest request,
 		RouteHttpResponse response,
 		HttpListenerContext? context,
-		bool RequireAuthentication = false 
+		bool RequireAuthentication = false
 	);
 
 	internal class Routes
 	{
-		private static HttpListenerResponse Response;
-		private static HttpListenerRequest Request;
 		private readonly List<Route> routes = new List<Route>();
 
 		private void Add(Route route)
@@ -34,15 +32,14 @@ namespace SVAssistant.Rest
 
 		public void HandleResquest(HttpListenerContext context)
 		{
-			Response = context.Response;
-			Request = context.Request;
+			var request = context.Request;
+			var response = context.Response;
+			HeaderConfiguration(response);
 
-			HeaderConfiguration();
+			var method = request.HttpMethod;
+			var path = request.Url?.AbsolutePath;
 
-			var method = Request.HttpMethod;
-			var path = Request.Url?.AbsolutePath;
-
-			RouteHttpResponse routeHttpResponse = new RouteHttpResponse(Response);
+			RouteHttpResponse routeHttpResponse = new RouteHttpResponse(response);
 
 			var route = routes.FirstOrDefault(route =>
 				route.Path == path && route.Method.ToString() == method
@@ -54,50 +51,57 @@ namespace SVAssistant.Rest
 				return;
 			}
 
-			if(isRateLimitExeeded(Request.RemoteEndPoint.Address.ToString()))
+			if (isRateLimitExeeded(request.RemoteEndPoint.Address.ToString()))
 			{
 				routeHttpResponse.Error(HttpStatusCode.TooManyRequests, "Too Many Resquests");
 				return;
 			}
 
-			if(route.RequireAuthentication && !isTokenValid())
+			if (route.RequireAuthentication && !isTokenValid(request))
 			{
-
 				routeHttpResponse.Error(HttpStatusCode.Unauthorized, "Token Invalid or Expire");
 				return;
 			}
-			
-			route.Action(Request, routeHttpResponse, context);
+
+			route.Action(request, routeHttpResponse, context);
+
+			response.Close();
 		}
 
-		private static void HeaderConfiguration(string CorsOrigin = "*", string CorsMethods = "GET, POST")
+		private static void HeaderConfiguration(
+			HttpListenerResponse response,
+			string CorsOrigin = "*",
+			string CorsMethods = "GET, POST"
+		)
 		{
-			Response.Headers.Add("Access-Control-Allow-Origin", CorsOrigin);
-			Response.Headers.Add("Access-Control-Allow-Methods", CorsMethods);
+			response.Headers.Add("Access-Control-Allow-Origin", CorsOrigin);
+			response.Headers.Add("Access-Control-Allow-Methods", CorsMethods);
 		}
 
-		private readonly Dictionary<string, RequestInfo> _rateLimitingDic = new Dictionary<string, RequestInfo>();
+		private readonly Dictionary<string, RequestInfo> _rateLimitingDic =
+			new Dictionary<string, RequestInfo>();
+
 		// @TODO: Change this arbitary value.
 		private const int Limit = 100;
 		private readonly TimeSpan ResetPeriod = TimeSpan.FromHours(1);
 
 		private bool isRateLimitExeeded(string ipAddr)
 		{
-			if(!_rateLimitingDic.ContainsKey(ipAddr))
+			if (!_rateLimitingDic.ContainsKey(ipAddr))
 			{
-				_rateLimitingDic[ipAddr] = new RequestInfo {Count = 1, LastRest = DateTime.Now};
+				_rateLimitingDic[ipAddr] = new RequestInfo { Count = 1, LastRest = DateTime.Now };
 				return false;
 			}
 
 			var info = _rateLimitingDic[ipAddr];
-			if((DateTime.Now - info.LastRest) > ResetPeriod)
+			if ((DateTime.Now - info.LastRest) > ResetPeriod)
 			{
 				info.Count = 1;
 				info.LastRest = DateTime.Now;
 				return false;
 			}
 
-			if(info.Count >= Limit)
+			if (info.Count >= Limit)
 			{
 				return true;
 			}
@@ -106,10 +110,10 @@ namespace SVAssistant.Rest
 			return false;
 		}
 
-		private bool isTokenValid() 
+		private bool isTokenValid(HttpListenerRequest request)
 		{
 			bool isValid;
-			var jwtMiddleware = Middleware.JWTMiddleware.VerifyJWT(Request, out isValid);
+			var jwtMiddleware = Middleware.JWTMiddleware.VerifyJWT(request, out isValid);
 			return isValid;
 		}
 	}
@@ -121,7 +125,12 @@ namespace SVAssistant.Rest
 		public HttpRouteAction Action { get; }
 		public bool RequireAuthentication { get; }
 
-		public Route(string path, HttpRouteAction action, HttpMethod method, bool requireAuth = false)
+		public Route(
+			string path,
+			HttpRouteAction action,
+			HttpMethod method,
+			bool requireAuth = false
+		)
 		{
 			this.Path = path;
 			this.Action = action;
@@ -132,7 +141,7 @@ namespace SVAssistant.Rest
 
 	public class RouteHttpResponse
 	{
-		private readonly HttpListenerResponse _response;
+		public readonly HttpListenerResponse _response;
 
 		public RouteHttpResponse(HttpListenerResponse response)
 		{
@@ -146,8 +155,7 @@ namespace SVAssistant.Rest
 			var jsonResponse = JsonSerializer.Serialize(data);
 			var buffer = Encoding.UTF8.GetBytes(jsonResponse);
 			_response.ContentLength64 = buffer.Length;
-			_response.OutputStream.Write(buffer, 0, buffer.Length);
-			_response.OutputStream.Close();
+			_response.OutputStream.Write(buffer, 0, buffer.Length);	
 		}
 
 		public void Error(HttpStatusCode code, string message)
@@ -158,13 +166,12 @@ namespace SVAssistant.Rest
 			var buffer = Encoding.UTF8.GetBytes(jsonResponse);
 			_response.ContentLength64 = buffer.Length;
 			_response.OutputStream.Write(buffer, 0, buffer.Length);
-			_response.OutputStream.Close();
 		}
 	}
 
 	public class RequestInfo
 	{
-		public int Count {get; set;}
-		public DateTime LastRest {get; set;}
+		public int Count { get; set; }
+		public DateTime LastRest { get; set; }
 	}
 }
