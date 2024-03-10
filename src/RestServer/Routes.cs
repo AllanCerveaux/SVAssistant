@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 
-namespace Rest
+namespace SVAssistant.Rest
 {
 	public delegate void HttpRouteAction(
 		HttpListenerRequest request,
@@ -48,19 +48,19 @@ namespace Rest
 				route.Path == path && route.Method.ToString() == method
 			);
 
-			if (route is null)
+			if (route == null)
 			{
 				routeHttpResponse.Error(HttpStatusCode.NotFound, "Route Not Found");
 				return;
 			}
 
-			if(!isRateLimitExeeded(Request.RemoteEndPoint.Address.ToString()))
+			if(isRateLimitExeeded(Request.RemoteEndPoint.Address.ToString()))
 			{
 				routeHttpResponse.Error(HttpStatusCode.TooManyRequests, "Too Many Resquests");
 				return;
 			}
 
-			if(route.RequireAuthentication && isTokenValid())
+			if(route.RequireAuthentication && !isTokenValid())
 			{
 
 				routeHttpResponse.Error(HttpStatusCode.Unauthorized, "Token Invalid or Expire");
@@ -83,7 +83,7 @@ namespace Rest
 
 		private bool isRateLimitExeeded(string ipAddr)
 		{
-			if(_rateLimitingDic.ContainsKey(ipAddr))
+			if(!_rateLimitingDic.ContainsKey(ipAddr))
 			{
 				_rateLimitingDic[ipAddr] = new RequestInfo {Count = 1, LastRest = DateTime.Now};
 				return false;
@@ -110,7 +110,6 @@ namespace Rest
 		{
 			bool isValid;
 			var jwtMiddleware = Middleware.JWTMiddleware.VerifyJWT(Request, out isValid);
-
 			return isValid;
 		}
 	}

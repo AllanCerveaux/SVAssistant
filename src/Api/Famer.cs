@@ -1,5 +1,5 @@
 using System.Net;
-using Rest;
+using SVAssistant.Rest;
 
 namespace SVAssistant.Api
 {

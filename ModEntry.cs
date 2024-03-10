@@ -1,5 +1,6 @@
 using System.Diagnostics;
-using Rest;
+
+using SVAssistant.Rest;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -9,11 +10,13 @@ namespace SVAssistant
 {
 	internal sealed class ModEntry : Mod
 	{
+		public static IMonitor Logger;
 		private ModConfig Config = null;
 
 		public override void Entry(IModHelper helper)
 		{
 			this.Config = this.LoadConfig();
+			Logger = this.Monitor;
 
 			helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
 			helper.Events.GameLoop.ReturnedToTitle += this.OnReturnToTitle;

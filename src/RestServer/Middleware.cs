@@ -1,7 +1,7 @@
 using System.Net;
 using System.Security.Claims;
 
-namespace Rest.Middleware
+namespace SVAssistant.Rest.Middleware
 {
 	public static class JWTMiddleware
 	{

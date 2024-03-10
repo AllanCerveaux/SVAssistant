@@ -2,7 +2,9 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 
-namespace Rest
+using StardewModdingAPI;
+
+namespace SVAssistant.Rest
 {
 	internal static class Server
 	{
@@ -80,6 +82,7 @@ namespace Rest
 				}
 				catch (Exception e)
 				{
+					ModEntry.Logger.Log($"Process Request Error: {e.Message}", LogLevel.Error);
 					response.StatusCode = (int)HttpStatusCode.InternalServerError;
 					response.ContentType = "application/json";
 					var buffer = Encoding.UTF8.GetBytes(
@@ -87,8 +90,6 @@ namespace Rest
 					);
 					response.ContentLength64 = buffer.Length;
 					response.OutputStream.Write(buffer, 0, buffer.Length);
-
-					Console.Write($"Process Request Error: {e.Message}");
 				}
 			}
 		}
