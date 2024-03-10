@@ -1,15 +1,16 @@
 using System.Diagnostics;
-
-using SVAssistant.Rest;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using SVAssistant.Api;
 using SVAssistant.Framework;
+using SVAssistant.Rest;
 
 namespace SVAssistant
 {
 	internal sealed class ModEntry : Mod
 	{
+		public static readonly Dictionary<string, string> _cache = new Dictionary<string, string>();
 		public static IMonitor Logger;
 		private ModConfig Config = null;
 
@@ -43,12 +44,20 @@ namespace SVAssistant
 		public void OnSaveLoaded(object? sender, SaveLoadedEventArgs eventArgs)
 		{
 			Server.StartHttpServer();
+			this.LoadApiRoutes();
+
 			HUDMessage hUDMessage = new HUDMessage(
 				$"SVAssitant has running on {Server.ServerUrl()}",
 				3
 			);
 			Game1.addHUDMessage(hUDMessage);
-			this.LoadApiRoutes();
+
+			var credential = Authentication.GenerateCredential();
+			Game1.chatBox.addInfoMessage(
+				$"To connect API you can use this password {credential["raw"]}"
+			);
+
+			_cache.Add("password", credential["password"]);
 		}
 
 		public void OnReturnToTitle(object? sender, ReturnedToTitleEventArgs eventArgs)
@@ -66,10 +75,9 @@ namespace SVAssistant
 
 		public void LoadApiRoutes()
 		{
-			Server.routes.Get(
-				"/current-farmer",
-				Api.FarmerController.HandleGetFarmer(Game1.player)
-			);
+			Server.routes.Post("/signin", AuthenticationController.SignIn);
+
+			Server.routes.Get("/current-farmer", FarmerController.HandleGetFarmer(Game1.player), true);
 		}
 	}
 }
