@@ -7,15 +7,9 @@ namespace SVAssistant.Rest.Middleware
 	{
 		public static ClaimsPrincipal VerifyJWT(HttpListenerRequest request, out bool isValid)
 		{
-			var token = request.Headers["Authorization"]?.Split(' ').LastOrDefault();
-			if (string.IsNullOrEmpty(token))
-			{
-				isValid = false;
-				return null;
-			}
-
 			try
 			{
+				var token = JsonWebToken.GetJwtTokenFromHeader(request);
 				var principal = JsonWebToken.Verify(token);
 				if (principal != null)
 				{

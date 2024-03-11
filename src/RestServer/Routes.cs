@@ -169,8 +169,7 @@ namespace SVAssistant.Rest
 			HttpStatusCode statusCode = HttpStatusCode.BadRequest
 		)
 		{
-			var jsonResponse = JsonSerializer.Serialize(new { code = (int)statusCode, message });
-			await ResponseAsync(jsonResponse, "application/json", (int)statusCode);
+			await Json(new { code = (int)statusCode, message }, (int)statusCode);
 		}
 	}
 

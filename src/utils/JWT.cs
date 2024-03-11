@@ -3,12 +3,15 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
+using SVAssistant;
+
 public static class JsonWebToken
 {
 	/// <summary>
 	/// Gets the secret key used for signing JWT tokens.
 	/// </summary>
-	private static string secret => Environment.GetEnvironmentVariable("JWT_SECRET");
+	private static string secret =>
+		Environment.GetEnvironmentVariable("JWT_SECRET") ?? "007b1fae-8cf4-482b-bfb4-d26a7906d5b0";
 
 	/// <summary>
 	/// Signs and generates a JWT token with specified claims.
@@ -40,7 +43,7 @@ public static class JsonWebToken
 
 		return new JwtSecurityTokenHandler().WriteToken(token);
 	}
-
+	
 	/// <summary>
 	/// Verifies the validity of a JWT token and returns the corresponding ClaimsPrincipal.
 	/// </summary>
@@ -71,6 +74,19 @@ public static class JsonWebToken
 			out validatedToken
 		);
 
+		ModEntry.Logger.Log($"{validatedToken.ToString()}", StardewModdingAPI.LogLevel.Info);
+		
 		return principal;
+	}
+
+	public static string GetJwtTokenFromHeader(System.Net.HttpListenerRequest request)
+	{
+		var token = request.Headers["Authorization"]?.Split(' ').LastOrDefault();
+		if (string.IsNullOrEmpty(token))
+		{
+			return null;
+		}
+
+		return token;
 	}
 }
