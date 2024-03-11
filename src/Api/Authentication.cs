@@ -51,7 +51,7 @@ namespace SVAssistant.Api
 			{
 				if (!isValid)
 				{
-                    await response.Error("Cannot find instance of game!");
+					await response.Error("Cannot find instance of game!");
 					return;
 				}
 
@@ -62,7 +62,7 @@ namespace SVAssistant.Api
 					Game1.player.IsMainPlayer.ToString()
 				);
 
-                await response.Json(new TokenDTO { token = token });
+				await response.Json(new TokenDTO { token = token });
 				return;
 			}
 			catch (Exception e)
