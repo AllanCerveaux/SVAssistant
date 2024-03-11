@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-
 using StardewModdingAPI;
 
 namespace SVAssistant.Rest
@@ -61,7 +60,7 @@ namespace SVAssistant.Rest
 					lock (Listener)
 					{
 						if (_keepGoing)
-							ProcessRequest(context);
+							Task.Run(() => ProcessRequest(context));
 					}
 				}
 				catch (Exception e)
@@ -72,13 +71,13 @@ namespace SVAssistant.Rest
 			}
 		}
 
-		private static void ProcessRequest(HttpListenerContext context)
+		private static async Task ProcessRequest(HttpListenerContext context)
 		{
 			using (var response = context.Response)
 			{
 				try
 				{
-					routes.HandleResquest(context);
+					await routes.HandleResquest(context);
 				}
 				catch (Exception e)
 				{

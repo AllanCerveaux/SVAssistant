@@ -29,7 +29,7 @@ namespace PasswordGenerator
 		private const string LowercaseCharacters = "abcdefghijklmnopqrstuvwxyz";
 		private const string UppercaseCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		private const string NumericCharacters = "0123456789";
-		private const string DefaultSpecialCharacters = @"!#$%&*@\";
+		private const string DefaultSpecialCharacters = @"!#$%&*";
 		private const int DefaultMinPasswordLength = 4;
 		private const int DefaultMaxPasswordLength = 256;
 		public string SpecialCharacters { get; set; }

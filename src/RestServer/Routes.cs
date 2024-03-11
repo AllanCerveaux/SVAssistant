@@ -4,8 +4,8 @@ using System.Text.Json;
 
 namespace SVAssistant.Rest
 {
-	public delegate void HttpRouteAction(
-		HttpListenerRequest request,
+	public delegate Task HttpRouteAction(
+		RouteHttpRequest request,
 		RouteHttpResponse response,
 		HttpListenerContext? context,
 		bool RequireAuthentication = false
@@ -30,7 +30,7 @@ namespace SVAssistant.Rest
 			Add(new Route(path, action, HttpMethod.Post, requireAuthentication));
 		}
 
-		public void HandleResquest(HttpListenerContext context)
+		public async Task HandleResquest(HttpListenerContext context)
 		{
 			var request = context.Request;
 			var response = context.Response;
@@ -39,6 +39,7 @@ namespace SVAssistant.Rest
 			var method = request.HttpMethod;
 			var path = request.Url?.AbsolutePath;
 
+			RouteHttpRequest routeHttpRequest = new RouteHttpRequest(request);
 			RouteHttpResponse routeHttpResponse = new RouteHttpResponse(response);
 
 			var route = routes.FirstOrDefault(route =>
@@ -47,25 +48,23 @@ namespace SVAssistant.Rest
 
 			if (route == null)
 			{
-				routeHttpResponse.Error(HttpStatusCode.NotFound, "Route Not Found");
+				await routeHttpResponse.Error("Route Not Found", HttpStatusCode.NotFound);
 				return;
 			}
 
 			if (isRateLimitExeeded(request.RemoteEndPoint.Address.ToString()))
 			{
-				routeHttpResponse.Error(HttpStatusCode.TooManyRequests, "Too Many Resquests");
+				await routeHttpResponse.Error("Too Many Resquests", HttpStatusCode.TooManyRequests);
 				return;
 			}
 
 			if (route.RequireAuthentication && !isTokenValid(request))
 			{
-				routeHttpResponse.Error(HttpStatusCode.Unauthorized, "Token Invalid or Expire");
+				await routeHttpResponse.Error("Token Invalid or Expire", HttpStatusCode.Unauthorized);
 				return;
 			}
 
-			route.Action(request, routeHttpResponse, context);
-
-			response.Close();
+			await route.Action(routeHttpRequest, routeHttpResponse, context);
 		}
 
 		private static void HeaderConfiguration(
@@ -89,15 +88,15 @@ namespace SVAssistant.Rest
 		{
 			if (!_rateLimitingDic.ContainsKey(ipAddr))
 			{
-				_rateLimitingDic[ipAddr] = new RequestInfo { Count = 1, LastRest = DateTime.Now };
+				_rateLimitingDic[ipAddr] = new RequestInfo { Count = 1, LastReset = DateTime.Now };
 				return false;
 			}
 
 			var info = _rateLimitingDic[ipAddr];
-			if ((DateTime.Now - info.LastRest) > ResetPeriod)
+			if ((DateTime.Now - info.LastReset) > ResetPeriod)
 			{
 				info.Count = 1;
-				info.LastRest = DateTime.Now;
+				info.LastReset = DateTime.Now;
 				return false;
 			}
 
@@ -141,37 +140,60 @@ namespace SVAssistant.Rest
 
 	public class RouteHttpResponse
 	{
-		public readonly HttpListenerResponse _response;
+		private static HttpListenerResponse _response;
 
 		public RouteHttpResponse(HttpListenerResponse response)
 		{
 			_response = response;
 		}
 
-		public void Json(object data, int stausCode = (int)HttpStatusCode.Accepted)
+		private async Task ResponseAsync(string data, string contentType, int statusCode)
 		{
-			_response.ContentType = "application/json";
-			_response.StatusCode = stausCode;
-			var jsonResponse = JsonSerializer.Serialize(data);
-			var buffer = Encoding.UTF8.GetBytes(jsonResponse);
+			_response.ContentType = contentType;
+			_response.StatusCode = statusCode;
+			var buffer = Encoding.UTF8.GetBytes(data);
 			_response.ContentLength64 = buffer.Length;
-			_response.OutputStream.Write(buffer, 0, buffer.Length);	
+			using(var stream = _response.OutputStream)
+			{
+				await stream.WriteAsync(buffer, 0, buffer.Length);
+			}
+			_response.Close();
 		}
 
-		public void Error(HttpStatusCode code, string message)
+		public async Task Json(object data, int statusCode = (int)HttpStatusCode.Accepted)
 		{
-			_response.ContentType = "application/json";
-			_response.StatusCode = (int)code;
-			var jsonResponse = JsonSerializer.Serialize(new { code, message });
-			var buffer = Encoding.UTF8.GetBytes(jsonResponse);
-			_response.ContentLength64 = buffer.Length;
-			_response.OutputStream.Write(buffer, 0, buffer.Length);
+			var jsonResponse = JsonSerializer.Serialize(data);
+			await ResponseAsync(jsonResponse, "application/json", statusCode);
+		}
+
+		public async Task Error(string message, HttpStatusCode statusCode = HttpStatusCode.BadRequest)
+		{
+			var jsonResponse = JsonSerializer.Serialize(new { code = (int)statusCode, message });
+			await ResponseAsync(jsonResponse, "application/json", (int)statusCode);
+		}
+	}
+
+	public class RouteHttpRequest
+	{
+		private static HttpListenerRequest _request;
+
+		public RouteHttpRequest(HttpListenerRequest request)
+		{
+			_request = request;
+		}
+
+		public async Task<string> ReadAsyncJsonBody()
+		{
+			using (var reader = new StreamReader(_request.InputStream, _request.ContentEncoding))
+			{
+				return await reader.ReadToEndAsync();
+			}
 		}
 	}
 
 	public class RequestInfo
 	{
 		public int Count { get; set; }
-		public DateTime LastRest { get; set; }
+		public DateTime LastReset { get; set; }
 	}
 }
