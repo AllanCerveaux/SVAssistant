@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace SVAssistant.Rest
 {
-	public delegate Task HttpRouteAction(
+	public delegate Task RouteAction(
 		RouteHttpRequest request,
 		RouteHttpResponse response,
 		HttpListenerContext? context,
@@ -20,12 +20,12 @@ namespace SVAssistant.Rest
 			routes.Add(route);
 		}
 
-		public void Get(string path, HttpRouteAction action, bool requireAuthentication = false)
+		public void Get(string path, RouteAction action, bool requireAuthentication = false)
 		{
 			Add(new Route(path, action, HttpMethod.Get, requireAuthentication));
 		}
 
-		public void Post(string path, HttpRouteAction action, bool requireAuthentication = false)
+		public void Post(string path, RouteAction action, bool requireAuthentication = false)
 		{
 			Add(new Route(path, action, HttpMethod.Post, requireAuthentication));
 		}
@@ -60,7 +60,10 @@ namespace SVAssistant.Rest
 
 			if (route.RequireAuthentication && !isTokenValid(request))
 			{
-				await routeHttpResponse.Error("Token Invalid or Expire", HttpStatusCode.Unauthorized);
+				await routeHttpResponse.Error(
+					"Token Invalid or Expire",
+					HttpStatusCode.Unauthorized
+				);
 				return;
 			}
 
@@ -121,15 +124,10 @@ namespace SVAssistant.Rest
 	{
 		public string Path { get; }
 		public HttpMethod Method { get; }
-		public HttpRouteAction Action { get; }
+		public RouteAction Action { get; }
 		public bool RequireAuthentication { get; }
 
-		public Route(
-			string path,
-			HttpRouteAction action,
-			HttpMethod method,
-			bool requireAuth = false
-		)
+		public Route(string path, RouteAction action, HttpMethod method, bool requireAuth = false)
 		{
 			this.Path = path;
 			this.Action = action;
@@ -153,7 +151,7 @@ namespace SVAssistant.Rest
 			_response.StatusCode = statusCode;
 			var buffer = Encoding.UTF8.GetBytes(data);
 			_response.ContentLength64 = buffer.Length;
-			using(var stream = _response.OutputStream)
+			using (var stream = _response.OutputStream)
 			{
 				await stream.WriteAsync(buffer, 0, buffer.Length);
 			}
@@ -166,7 +164,10 @@ namespace SVAssistant.Rest
 			await ResponseAsync(jsonResponse, "application/json", statusCode);
 		}
 
-		public async Task Error(string message, HttpStatusCode statusCode = HttpStatusCode.BadRequest)
+		public async Task Error(
+			string message,
+			HttpStatusCode statusCode = HttpStatusCode.BadRequest
+		)
 		{
 			var jsonResponse = JsonSerializer.Serialize(new { code = (int)statusCode, message });
 			await ResponseAsync(jsonResponse, "application/json", (int)statusCode);
