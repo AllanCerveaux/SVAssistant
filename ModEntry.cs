@@ -76,6 +76,8 @@ namespace SVAssistant
 		public void LoadApiRoutes()
 		{
 			Server.routes.Post("/signin", AuthenticationController.SignIn);
+
+			Server.routes.Get("/current-famer", FamerController.GetCurrentFarmer(Game1.player), true);
 		}
 	}
 }

@@ -11,7 +11,7 @@ namespace SVAssistant.Api
 		public List<AchievementDTO> Achievements { get; set; }
 	}
 
-	internal static class FarmerEntity
+	public static class FarmerEntity
 	{
 		public static FarmerDTO GetFarmerDTO(StardewValley.Farmer farmer)
 		{
@@ -25,12 +25,12 @@ namespace SVAssistant.Api
 		}
 	}
 
-	internal class FarmerController
+	public class FamerController
 	{
-		public static HttpRouteAction HandleGetFarmer(StardewValley.Farmer farmer)
+		public static RouteAction GetCurrentFarmer(StardewValley.Farmer farmer)
 		{
 			return (
-				HttpListenerRequest request,
+				RouteHttpRequest request,
 				RouteHttpResponse response,
 				HttpListenerContext? context,
 				bool RequireAuthentication
