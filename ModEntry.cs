@@ -63,6 +63,7 @@ namespace SVAssistant
 		public void OnReturnToTitle(object? sender, ReturnedToTitleEventArgs eventArgs)
 		{
 			Server.StopHttpServer();
+			_cache.Clear();
 		}
 
 		public void OnInputChanged(object? sender, ButtonsChangedEventArgs eventArgs)
