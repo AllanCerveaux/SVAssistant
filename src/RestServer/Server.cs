@@ -39,7 +39,7 @@ namespace SVAssistant.Rest
 		private readonly HttpListener _listener;
 		private volatile bool _keepGoing = false;
 		private static Task _mainLoopTask;
-		public static Routes Routes { get; } = new Routes();
+		public static Routes Routes { get; } = Routes.Instance;
 
 		private HttpServer()
 		{
@@ -101,7 +101,7 @@ namespace SVAssistant.Rest
 			{
 				try
 				{
-					await Routes.HandleResquest(context);
+					await Routes.HandleRequestAsync(context);
 				}
 				catch (Exception e)
 				{
