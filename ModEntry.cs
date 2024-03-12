@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.IdentityModel.Tokens;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -13,12 +14,13 @@ namespace SVAssistant
 		public static readonly Dictionary<string, string> _cache = new Dictionary<string, string>();
 		public static IMonitor Logger;
 		private ModConfig Config = null;
+		private HttpServer _httpServer;
 
 		public override void Entry(IModHelper helper)
 		{
-			this.Config = this.LoadConfig();
 			Logger = this.Monitor;
 
+			helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
 			helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
 			helper.Events.GameLoop.ReturnedToTitle += this.OnReturnToTitle;
 			helper.Events.Input.ButtonsChanged += this.OnInputChanged;
@@ -33,21 +35,29 @@ namespace SVAssistant
 		{
 			try
 			{
-				Process.Start(new ProcessStartInfo(Server.ServerUrl()) { UseShellExecute = true });
+				Process.Start(
+					new ProcessStartInfo(_httpServer.ServerUrl) { UseShellExecute = true }
+				);
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine($"Une erreur est survenue : {e.Message}");
+				Logger.Log($"Une erreur est survenue : {e.Message}", LogLevel.Error);
 			}
+		}
+
+		private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+		{
+			_httpServer = HttpServer.Instance;
+			this.Config = this.LoadConfig();
 		}
 
 		public void OnSaveLoaded(object? sender, SaveLoadedEventArgs eventArgs)
 		{
-			Server.StartHttpServer();
+			_httpServer.Start();
 			this.LoadApiRoutes();
 
 			HUDMessage hUDMessage = new HUDMessage(
-				$"SVAssitant has running on {Server.ServerUrl()}",
+				$"SVAssitant has running on {_httpServer.ServerUrl}",
 				3
 			);
 			Game1.addHUDMessage(hUDMessage);
@@ -62,7 +72,7 @@ namespace SVAssistant
 
 		public void OnReturnToTitle(object? sender, ReturnedToTitleEventArgs eventArgs)
 		{
-			Server.StopHttpServer();
+			_httpServer.Stop();
 			_cache.Clear();
 		}
 
@@ -70,15 +80,18 @@ namespace SVAssistant
 		{
 			if (Config.Controls.toogleMenu.JustPressed())
 			{
-				this.OpenInBrowser(Server.ServerUrl());
+				this.OpenInBrowser(_httpServer.ServerUrl);
 			}
 		}
 
 		public void LoadApiRoutes()
 		{
-			Server.routes.Post("/signin", AuthenticationController.SignIn);
-
-			Server.routes.Get("/current-farmer", FamerController.GetCurrentFarmer(Game1.player), true);
+			FamerController famerController = new FamerController();
+			HttpServer.Routes.Post("/signin", AuthenticationController.SignIn);
+			HttpServer.Routes.Get(
+				"/current-farmer",
+				famerController.GetCurrentFarmer(Game1.player)
+			);
 		}
 	}
 }
