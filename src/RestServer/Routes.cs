@@ -1,40 +1,88 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.IdentityModel.Tokens;
 
 namespace SVAssistant.Rest
 {
 	public delegate Task RouteAction(
 		RouteHttpRequest request,
 		RouteHttpResponse response,
-		HttpListenerContext? context,
-		bool RequireAuthentication = false
+		HttpListenerContext? context
 	);
 
-	internal class Routes
+	public class RoutesHeader()
 	{
+		public HttpListenerRequest Request { get; set; }
+		public HttpListenerResponse Response { get; set; }
+		private AsyncLocal<JwtSecurityToken> _asyncSecurityToken =
+			new AsyncLocal<JwtSecurityToken>();
+		public JwtSecurityToken SecurityToken
+		{
+			get => _asyncSecurityToken.Value;
+			set => _asyncSecurityToken.Value = value;
+		}
+
+		public void Cors(string CorsOrigin = "*", string CorsMethods = "GET,PUT")
+		{
+			Request.Headers.Add("Access-Control-Allow-Origin", CorsOrigin);
+			Request.Headers.Add("Access-Control-Allow-Methods", CorsMethods);
+		}
+
+		public string? GetAuthorization()
+		{
+			return Request.Headers.Get("Authorization");
+		}
+	}
+
+	public class Routes
+	{
+		private static Routes _instance;
+		private static readonly object _lock = new object();
+		public static Routes Instance
+		{
+			get
+			{
+				lock (_lock)
+				{
+					if (_instance == null)
+					{
+						_instance = new Routes();
+					}
+					return _instance;
+				}
+			}
+		}
+
+		public RoutesHeader header { get; set; }
 		private readonly List<Route> routes = new List<Route>();
+
+		private Routes() { }
 
 		private void Add(Route route)
 		{
 			routes.Add(route);
 		}
 
-		public void Get(string path, RouteAction action, bool requireAuthentication = false)
+		public void Get(string path, RouteAction action)
 		{
-			Add(new Route(path, action, HttpMethod.Get, requireAuthentication));
+			Add(new Route(path, action, HttpMethod.Get));
 		}
 
-		public void Post(string path, RouteAction action, bool requireAuthentication = false)
+		public void Post(string path, RouteAction action)
 		{
-			Add(new Route(path, action, HttpMethod.Post, requireAuthentication));
+			Add(new Route(path, action, HttpMethod.Post));
 		}
 
-		public async Task HandleResquest(HttpListenerContext context)
+		public async Task HandleRequestAsync(HttpListenerContext context)
 		{
 			var request = context.Request;
 			var response = context.Response;
-			HeaderConfiguration(response);
+
+			header = new RoutesHeader { Request = request, Response = response };
+
+			header.Cors();
 
 			var method = request.HttpMethod;
 			var path = request.Url?.AbsolutePath;
@@ -58,26 +106,7 @@ namespace SVAssistant.Rest
 				return;
 			}
 
-			if (route.RequireAuthentication && !isTokenValid(request))
-			{
-				await routeHttpResponse.Error(
-					"Token Invalid or Expire",
-					HttpStatusCode.Unauthorized
-				);
-				return;
-			}
-
 			await route.Action(routeHttpRequest, routeHttpResponse, context);
-		}
-
-		private static void HeaderConfiguration(
-			HttpListenerResponse response,
-			string CorsOrigin = "*",
-			string CorsMethods = "GET, POST"
-		)
-		{
-			response.Headers.Add("Access-Control-Allow-Origin", CorsOrigin);
-			response.Headers.Add("Access-Control-Allow-Methods", CorsMethods);
 		}
 
 		private readonly Dictionary<string, RequestInfo> _rateLimitingDic =
@@ -110,13 +139,6 @@ namespace SVAssistant.Rest
 
 			info.Count++;
 			return false;
-		}
-
-		private bool isTokenValid(HttpListenerRequest request)
-		{
-			bool isValid;
-			var jwtMiddleware = Middleware.JWTMiddleware.VerifyJWT(request, out isValid);
-			return isValid;
 		}
 	}
 
