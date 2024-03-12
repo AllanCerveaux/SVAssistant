@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -5,90 +6,119 @@ using StardewModdingAPI;
 
 namespace SVAssistant.Rest
 {
-	internal static class Server
+	public class HttpServerConfig
 	{
-		private const int Port = 8888;
-		private const string Host = "localhost";
-		private static readonly HttpListener Listener = new HttpListener
+		public string Host { get; set; } = "localhost";
+		public int Port { get; set; } = 8000;
+
+		public string ServerUrl => $"http://{Host}:{Port}/";
+	}
+
+	public class HttpServer
+	{
+		private static HttpServer _instance;
+		private static readonly object _lock = new object();
+
+		public static HttpServer Instance
 		{
-			Prefixes = { $"http://{Host}:{Port}/" }
-		};
-
-		private static volatile bool _keepGoing = true;
-
-		private static Task _mainLoop;
-
-		public static readonly Routes routes = new Routes();
-
-		public static string ServerUrl()
-		{
-			return $"http://{Host}:{Port}";
+			get
+			{
+				lock (_lock)
+				{
+					if (_instance == null)
+					{
+						_instance = new HttpServer();
+					}
+					return _instance;
+				}
+			}
 		}
 
-		public static void StartHttpServer()
+		private readonly HttpServerConfig _config;
+		public string ServerUrl { get; }
+		private readonly HttpListener _listener;
+		private volatile bool _keepGoing = false;
+		private static Task _mainLoopTask;
+		public static Routes Routes { get; } = new Routes();
+
+		private HttpServer()
 		{
-			if (_mainLoop != null && !_mainLoop.IsCompleted)
+			_config = new HttpServerConfig();
+			ModEntry.Logger.Log($"{_config.ServerUrl}", LogLevel.Info);
+			_listener = new HttpListener { Prefixes = { $"{_config.ServerUrl}" } };
+			ServerUrl = _config.ServerUrl;
+		}
+
+		public void Start()
+		{
+			if (_mainLoopTask != null && !_mainLoopTask.IsCompleted)
 				return;
-			_mainLoop = MainLoop();
+
+			_keepGoing = true;
+			_listener.Start();
+			_mainLoopTask = MainLoopAsync();
 		}
 
-		public static void StopHttpServer()
+		public void Stop()
 		{
 			_keepGoing = false;
-			lock (Listener)
-			{
-				Listener.Stop();
-			}
-			try
-			{
-				_mainLoop.Wait();
-			}
-			catch { }
+			_listener.Stop();
+			_listener.Close();
+			_mainLoopTask?.Wait();
 		}
 
-		private static async Task MainLoop()
+		private async Task MainLoopAsync()
 		{
-			if (!_keepGoing)
-				_keepGoing = true;
-
-			Listener.Start();
 			while (_keepGoing)
 			{
 				try
 				{
-					var context = await Listener.GetContextAsync();
-					lock (Listener)
+					var context = await _listener.GetContextAsync();
+					lock (_listener)
 					{
 						if (_keepGoing)
-							Task.Run(() => ProcessRequest(context));
+							Task.Run(() => ProcessRequestAsync(context));
 					}
 				}
 				catch (Exception e)
+					when (e is HttpListenerException || e is ObjectDisposedException)
 				{
-					if (e is HttpListenerException)
-						return;
+					break;
+				}
+				catch (Exception e)
+				{
+					ModEntry.Logger.Log(
+						$"Unexpected error in server loop: {e.Message}",
+						LogLevel.Error
+					);
 				}
 			}
 		}
 
-		private static async Task ProcessRequest(HttpListenerContext context)
+		private static async Task ProcessRequestAsync(HttpListenerContext context)
 		{
 			using (var response = context.Response)
 			{
 				try
 				{
-					await routes.HandleResquest(context);
+					await Routes.HandleResquest(context);
 				}
 				catch (Exception e)
 				{
 					ModEntry.Logger.Log($"Process Request Error: {e.Message}", LogLevel.Error);
+
 					response.StatusCode = (int)HttpStatusCode.InternalServerError;
 					response.ContentType = "application/json";
-					var buffer = Encoding.UTF8.GetBytes(
-						JsonSerializer.Serialize(new { error = "Bad request" })
-					);
+					var errorResponse = JsonSerializer.Serialize(
+						new { code = response.StatusCode, error = "Internal server error" }
+					); // Message d'erreur modifié pour refléter l'erreur interne
+					var buffer = Encoding.UTF8.GetBytes(errorResponse);
 					response.ContentLength64 = buffer.Length;
-					response.OutputStream.Write(buffer, 0, buffer.Length);
+					await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+				}
+				finally
+				{
+					response.OutputStream.Close();
 				}
 			}
 		}
