@@ -35,8 +35,7 @@ namespace SVAssistant.Api
 		public static async Task SignIn(
 			RouteHttpRequest request,
 			RouteHttpResponse response,
-			HttpListenerContext? context,
-			bool RequireAuthentication = false
+			HttpListenerContext? context
 		)
 		{
 			var requestBody = request.ReadAsyncJsonBody();

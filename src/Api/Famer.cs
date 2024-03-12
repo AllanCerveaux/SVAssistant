@@ -1,4 +1,7 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using StardewValley;
+using SVAssistant.Decorator;
 using SVAssistant.Rest;
 
 namespace SVAssistant.Api
@@ -13,8 +16,10 @@ namespace SVAssistant.Api
 
 	public static class FarmerEntity
 	{
-		public static FarmerDTO GetFarmerDTO(StardewValley.Farmer farmer)
+		public static FarmerDTO GetFarmerDTO(long id)
 		{
+			StardewValley.Farmer farmer = Game1.getFarmer(id);
+
 			return new FarmerDTO
 			{
 				Name = farmer.Name,
@@ -27,14 +32,15 @@ namespace SVAssistant.Api
 
 	public class FamerController
 	{
-		public static RouteAction GetCurrentFarmer(StardewValley.Farmer farmer)
+		public RouteAction GetCurrentFarmer(StardewValley.Farmer farmer)
 		{
-			return (
-				RouteHttpRequest request,
-				RouteHttpResponse response,
-				HttpListenerContext? context,
-				bool RequireAuthentication
-			) => response.Json(FarmerEntity.GetFarmerDTO(farmer));
+			return [JWT]
+			(RouteHttpRequest request, RouteHttpResponse response, HttpListenerContext? context) =>
+			{
+				var token = HttpServer.Routes.header.SecurityToken as JwtSecurityToken;
+				ModEntry.Logger.Log($"{token.Subject}", StardewModdingAPI.LogLevel.Info);
+				return response.Json(FarmerEntity.GetFarmerDTO(long.Parse(token.Subject)));
+			};
 		}
 	}
 }
