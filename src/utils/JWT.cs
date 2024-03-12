@@ -2,8 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-
-using SVAssistant;
+using SVAssistant.Rest;
 
 public static class JsonWebToken
 {
@@ -43,7 +42,7 @@ public static class JsonWebToken
 
 		return new JwtSecurityTokenHandler().WriteToken(token);
 	}
-	
+
 	/// <summary>
 	/// Verifies the validity of a JWT token and returns the corresponding ClaimsPrincipal.
 	/// </summary>
@@ -52,7 +51,7 @@ public static class JsonWebToken
 	/// <remarks>
 	/// @TODO: Review activation of <c>ValidateIssuer</c> and <c>ValidateAudience</c>.
 	/// </remarks>
-	public static ClaimsPrincipal Verify(string token)
+	public static void Verify(string token, out SecurityToken securityToken)
 	{
 		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
 		var tokenValidationParameters = new TokenValidationParameters
@@ -66,27 +65,6 @@ public static class JsonWebToken
 		};
 
 		var tokenHandler = new JwtSecurityTokenHandler();
-
-		SecurityToken validatedToken;
-		var principal = tokenHandler.ValidateToken(
-			token,
-			tokenValidationParameters,
-			out validatedToken
-		);
-
-		ModEntry.Logger.Log($"{validatedToken.ToString()}", StardewModdingAPI.LogLevel.Info);
-		
-		return principal;
-	}
-
-	public static string GetJwtTokenFromHeader(System.Net.HttpListenerRequest request)
-	{
-		var token = request.Headers["Authorization"]?.Split(' ').LastOrDefault();
-		if (string.IsNullOrEmpty(token))
-		{
-			return null;
-		}
-
-		return token;
+		tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
 	}
 }
