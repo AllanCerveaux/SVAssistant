@@ -1,5 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http;
 using System.Reflection;
 using MethodDecorator.Fody.Interfaces;
 using Microsoft.IdentityModel.Tokens;

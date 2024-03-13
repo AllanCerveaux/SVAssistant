@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using SVAssistant;
-using SVAssistant.Rest;
 
 public static class JsonWebToken
 {
