@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using SVAssistant;
 using SVAssistant.Rest;
 
 public static class JsonWebToken
@@ -30,13 +31,12 @@ public static class JsonWebToken
 			new Claim(JwtRegisteredClaimNames.UniqueName, uniqueName),
 			new Claim(JwtRegisteredClaimNames.Aud, audiance),
 			new Claim("admin", admin),
-			new Claim(JwtRegisteredClaimNames.Exp, DateTime.Now.AddDays(7).ToString()),
 			new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
 		};
 
 		var token = new JwtSecurityToken(
 			claims: claims,
-			expires: DateTime.Now.AddDays(7),
+			expires: DateTime.UtcNow.AddDays(7),
 			signingCredentials: credential
 		);
 
@@ -51,7 +51,7 @@ public static class JsonWebToken
 	/// <remarks>
 	/// @TODO: Review activation of <c>ValidateIssuer</c> and <c>ValidateAudience</c>.
 	/// </remarks>
-	public static void Verify(string token, out SecurityToken securityToken)
+	public static ClaimsPrincipal? Verify(string token)
 	{
 		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
 		var tokenValidationParameters = new TokenValidationParameters
@@ -64,7 +64,20 @@ public static class JsonWebToken
 			ClockSkew = TimeSpan.Zero
 		};
 
-		var tokenHandler = new JwtSecurityTokenHandler();
-		tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
+		try
+		{
+			var tokenHandler = new JwtSecurityTokenHandler();
+			var principal = tokenHandler.ValidateToken(
+				token,
+				tokenValidationParameters,
+				out SecurityToken validatedToken
+			);
+			return principal;
+		}
+		catch (SecurityTokenValidationException svtex)
+		{
+			ModEntry.Logger.Log($"JWT Verify: {svtex.Message}");
+			throw new SecurityTokenValidationException();
+		}
 	}
 }

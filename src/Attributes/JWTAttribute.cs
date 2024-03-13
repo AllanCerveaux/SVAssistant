@@ -32,8 +32,8 @@ namespace SVAssistant.Decorator
 
 			try
 			{
-				JsonWebToken.Verify(_jwtToken, out SecurityToken securityToken);
-				Routes.header.SecurityToken = (JwtSecurityToken)securityToken;
+				var principal = JsonWebToken.Verify(_jwtToken);
+				Routes.header.ClaimPrincipal = principal;
 			}
 			catch (SecurityTokenValidationException e) // Catchez l'exception spécifique et non Exception générale
 			{

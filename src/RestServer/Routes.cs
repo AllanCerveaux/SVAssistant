@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
@@ -143,12 +144,11 @@ namespace SVAssistant.Rest
 	{
 		public HttpListenerRequest Request { get; set; }
 		public HttpListenerResponse Response { get; set; }
-		private AsyncLocal<JwtSecurityToken> _asyncSecurityToken =
-			new AsyncLocal<JwtSecurityToken>();
-		public JwtSecurityToken SecurityToken
+		private AsyncLocal<ClaimsPrincipal> _asyncClaimPrincipal = new AsyncLocal<ClaimsPrincipal>();
+		public ClaimsPrincipal ClaimPrincipal
 		{
-			get => _asyncSecurityToken.Value;
-			set => _asyncSecurityToken.Value = value;
+			get => _asyncClaimPrincipal.Value;
+			set => _asyncClaimPrincipal.Value = value;
 		}
 
 		public RoutesHeader(HttpListenerRequest request, HttpListenerResponse response)
