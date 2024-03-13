@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Security.Claims;
 using StardewValley;
 using SVAssistant.Decorator;
 using SVAssistant.Rest;
@@ -39,9 +40,26 @@ namespace SVAssistant.Api
 			HttpListenerContext? context
 		)
 		{
-			return response.Json(
-				FarmerEntity.GetFarmerDTO(long.Parse(Routes.Instance.header.SecurityToken.Subject))
-			);
+			var principal = Routes.Instance.header.ClaimPrincipal;
+			if (principal == null)
+			{
+				ModEntry.Logger.Log("SecurityToken is not set.", StardewModdingAPI.LogLevel.Info);
+				return response.Error("Unauthorized - Token not set.", HttpStatusCode.Unauthorized);
+			}
+
+			var subjectClaim =
+				principal.FindFirst(ClaimTypes.NameIdentifier)
+				?? principal.FindFirst(JwtRegisteredClaimNames.Sub);
+			if (subjectClaim == null)
+			{
+				ModEntry.Logger.Log("Subject claim is missing.", StardewModdingAPI.LogLevel.Info);
+				return response.Error(
+					"Unauthorized - JWT Mal Formatted",
+					HttpStatusCode.Unauthorized
+				);
+			}
+
+			return response.Json(FarmerEntity.GetFarmerDTO(long.Parse(subjectClaim.Value)));
 		}
 	}
 }
