@@ -32,15 +32,16 @@ namespace SVAssistant.Api
 
 	public class FamerController
 	{
-		public RouteAction GetCurrentFarmer(StardewValley.Farmer farmer)
+		[JWT]
+		public async Task<Task> GetCurrentFarmer(
+			RouteHttpRequest request,
+			RouteHttpResponse response,
+			HttpListenerContext? context
+		)
 		{
-			return [JWT]
-			(RouteHttpRequest request, RouteHttpResponse response, HttpListenerContext? context) =>
-			{
-				var token = HttpServer.Routes.header.SecurityToken as JwtSecurityToken;
-				ModEntry.Logger.Log($"{token.Subject}", StardewModdingAPI.LogLevel.Info);
-				return response.Json(FarmerEntity.GetFarmerDTO(long.Parse(token.Subject)));
-			};
+			return response.Json(
+				FarmerEntity.GetFarmerDTO(long.Parse(Routes.Instance.header.SecurityToken.Subject))
+			);
 		}
 	}
 }

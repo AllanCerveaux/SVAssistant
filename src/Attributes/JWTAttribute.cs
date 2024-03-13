@@ -19,7 +19,7 @@ namespace SVAssistant.Decorator
 
 		public void Init(object instance, MethodBase method, object[] args)
 		{
-			Routes = HttpServer.Routes;
+			Routes = Routes.Instance;
 		}
 
 		public void OnEntry()
@@ -34,12 +34,8 @@ namespace SVAssistant.Decorator
 			{
 				JsonWebToken.Verify(_jwtToken, out SecurityToken securityToken);
 				Routes.header.SecurityToken = (JwtSecurityToken)securityToken;
-				ModEntry.Logger.Log(
-					$"{Routes.header.SecurityToken}",
-					StardewModdingAPI.LogLevel.Info
-				);
 			}
-			catch (Exception e) // Catchez l'exception spécifique et non Exception générale
+			catch (SecurityTokenValidationException e) // Catchez l'exception spécifique et non Exception générale
 			{
 				ModEntry.Logger.Log($"JWT OnEntry: {e}", StardewModdingAPI.LogLevel.Error);
 				throw new UnauthorizedAccessException("Invalid JWT", e);

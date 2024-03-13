@@ -39,7 +39,7 @@ namespace SVAssistant.Rest
 		private readonly HttpListener _listener;
 		private volatile bool _keepGoing = false;
 		private static Task _mainLoopTask;
-		public static Routes Routes { get; } = Routes.Instance;
+		public static Routes routes { get; } = Routes.Instance;
 
 		private HttpServer()
 		{
@@ -95,13 +95,27 @@ namespace SVAssistant.Rest
 			}
 		}
 
+		/// <remarks>@TODO: fine better way to catch routes exeption</remarks>
 		private static async Task ProcessRequestAsync(HttpListenerContext context)
 		{
 			using (var response = context.Response)
 			{
 				try
 				{
-					await Routes.HandleRequestAsync(context);
+					await routes.HandleRequestAsync(context);
+				}
+				catch (UnauthorizedAccessException e)
+				{
+					ModEntry.Logger.Log($"Authorization error: {e.Message}", LogLevel.Error);
+
+					response.StatusCode = (int)HttpStatusCode.Unauthorized;
+					response.ContentType = "application/json";
+					var errorResponse = JsonSerializer.Serialize(
+						new { code = response.StatusCode, error = "Unauthorized" }
+					);
+					var buffer = Encoding.UTF8.GetBytes(errorResponse);
+					response.ContentLength64 = buffer.Length;
+					await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
 				}
 				catch (Exception e)
 				{

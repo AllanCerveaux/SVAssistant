@@ -1,8 +1,8 @@
+using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Microsoft.IdentityModel.Tokens;
 
 namespace SVAssistant.Rest
 {
@@ -12,51 +12,13 @@ namespace SVAssistant.Rest
 		HttpListenerContext? context
 	);
 
-	public class RoutesHeader()
-	{
-		public HttpListenerRequest Request { get; set; }
-		public HttpListenerResponse Response { get; set; }
-		private AsyncLocal<JwtSecurityToken> _asyncSecurityToken =
-			new AsyncLocal<JwtSecurityToken>();
-		public JwtSecurityToken SecurityToken
-		{
-			get => _asyncSecurityToken.Value;
-			set => _asyncSecurityToken.Value = value;
-		}
-
-		public void Cors(string CorsOrigin = "*", string CorsMethods = "GET,PUT")
-		{
-			Request.Headers.Add("Access-Control-Allow-Origin", CorsOrigin);
-			Request.Headers.Add("Access-Control-Allow-Methods", CorsMethods);
-		}
-
-		public string? GetAuthorization()
-		{
-			return Request.Headers.Get("Authorization");
-		}
-	}
-
 	public class Routes
 	{
-		private static Routes _instance;
-		private static readonly object _lock = new object();
-		public static Routes Instance
-		{
-			get
-			{
-				lock (_lock)
-				{
-					if (_instance == null)
-					{
-						_instance = new Routes();
-					}
-					return _instance;
-				}
-			}
-		}
+		private static readonly Lazy<Routes> _instance = new Lazy<Routes>(() => new Routes());
+		public static Routes Instance => _instance.Value;
 
-		public RoutesHeader header { get; set; }
 		private readonly List<Route> routes = new List<Route>();
+		public RoutesHeader header { get; set; }
 
 		private Routes() { }
 
@@ -77,13 +39,11 @@ namespace SVAssistant.Rest
 
 		public async Task HandleRequestAsync(HttpListenerContext context)
 		{
-			var request = context.Request;
-			var response = context.Response;
-
-			header = new RoutesHeader { Request = request, Response = response };
-
+			header = new RoutesHeader(context.Request, context.Response);
 			header.Cors();
 
+			var request = context.Request;
+			var response = context.Response;
 			var method = request.HttpMethod;
 			var path = request.Url?.AbsolutePath;
 
@@ -100,7 +60,7 @@ namespace SVAssistant.Rest
 				return;
 			}
 
-			if (isRateLimitExeeded(request.RemoteEndPoint.Address.ToString()))
+			if (RouteRateLimit.isRateLimitExeeded(request.RemoteEndPoint.Address.ToString()))
 			{
 				await routeHttpResponse.Error("Too Many Resquests", HttpStatusCode.TooManyRequests);
 				return;
@@ -108,59 +68,25 @@ namespace SVAssistant.Rest
 
 			await route.Action(routeHttpRequest, routeHttpResponse, context);
 		}
-
-		private readonly Dictionary<string, RequestInfo> _rateLimitingDic =
-			new Dictionary<string, RequestInfo>();
-
-		// @TODO: Change this arbitary value.
-		private const int Limit = 100;
-		private readonly TimeSpan ResetPeriod = TimeSpan.FromHours(1);
-
-		private bool isRateLimitExeeded(string ipAddr)
-		{
-			if (!_rateLimitingDic.ContainsKey(ipAddr))
-			{
-				_rateLimitingDic[ipAddr] = new RequestInfo { Count = 1, LastReset = DateTime.Now };
-				return false;
-			}
-
-			var info = _rateLimitingDic[ipAddr];
-			if ((DateTime.Now - info.LastReset) > ResetPeriod)
-			{
-				info.Count = 1;
-				info.LastReset = DateTime.Now;
-				return false;
-			}
-
-			if (info.Count >= Limit)
-			{
-				return true;
-			}
-
-			info.Count++;
-			return false;
-		}
 	}
 
-	internal class Route
+	public class Route
 	{
 		public string Path { get; }
 		public HttpMethod Method { get; }
 		public RouteAction Action { get; }
-		public bool RequireAuthentication { get; }
 
-		public Route(string path, RouteAction action, HttpMethod method, bool requireAuth = false)
+		public Route(string path, RouteAction action, HttpMethod method)
 		{
 			this.Path = path;
 			this.Action = action;
 			this.Method = method;
-			this.RequireAuthentication = requireAuth;
 		}
 	}
 
 	public class RouteHttpResponse
 	{
-		private static HttpListenerResponse _response;
+		private HttpListenerResponse _response;
 
 		public RouteHttpResponse(HttpListenerResponse response)
 		{
@@ -197,7 +123,7 @@ namespace SVAssistant.Rest
 
 	public class RouteHttpRequest
 	{
-		private static HttpListenerRequest _request;
+		private HttpListenerRequest _request;
 
 		public RouteHttpRequest(HttpListenerRequest request)
 		{
@@ -213,9 +139,73 @@ namespace SVAssistant.Rest
 		}
 	}
 
+	public class RoutesHeader
+	{
+		public HttpListenerRequest Request { get; set; }
+		public HttpListenerResponse Response { get; set; }
+		private AsyncLocal<JwtSecurityToken> _asyncSecurityToken =
+			new AsyncLocal<JwtSecurityToken>();
+		public JwtSecurityToken SecurityToken
+		{
+			get => _asyncSecurityToken.Value;
+			set => _asyncSecurityToken.Value = value;
+		}
+
+		public RoutesHeader(HttpListenerRequest request, HttpListenerResponse response)
+		{
+			Request = request;
+			Response = response;
+		}
+
+		public void Cors(string corsOrigin = "*", string corsMethods = "GET, PUT")
+		{
+			Response.AppendHeader("Access-Control-Allow-Origin", corsOrigin);
+			Response.AppendHeader("Access-Control-Allow-Methods", corsMethods);
+		}
+
+		public string? GetAuthorization()
+		{
+			return Request.Headers["Authorization"];
+		}
+	}
+
+	public class RouteRateLimit
+	{
+		private static readonly ConcurrentDictionary<string, RequestInfo> _rateLimitingDic =
+			new ConcurrentDictionary<string, RequestInfo>();
+
+		// @TODO: Change this arbitary value.
+		private const int Limit = 100;
+		private static readonly TimeSpan ResetPeriod = TimeSpan.FromHours(1);
+
+		public static bool isRateLimitExeeded(string ipAddr)
+		{
+			var now = DateTime.UtcNow;
+			var info = _rateLimitingDic.GetOrAdd(
+				ipAddr,
+				_ => new RequestInfo { Count = 1, LastReset = now }
+			);
+
+			if ((now - info.LastReset) > ResetPeriod)
+			{
+				info.Count = 1;
+				info.LastReset = now;
+				return false;
+			}
+
+			if (info.Count >= Limit)
+			{
+				return true;
+			}
+
+			Interlocked.Increment(ref info.Count);
+			return false;
+		}
+	}
+
 	public class RequestInfo
 	{
-		public int Count { get; set; }
+		public int Count;
 		public DateTime LastReset { get; set; }
 	}
 }

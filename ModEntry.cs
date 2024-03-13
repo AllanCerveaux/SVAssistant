@@ -87,11 +87,8 @@ namespace SVAssistant
 		public void LoadApiRoutes()
 		{
 			FamerController famerController = new FamerController();
-			HttpServer.Routes.Post("/signin", AuthenticationController.SignIn);
-			HttpServer.Routes.Get(
-				"/current-farmer",
-				famerController.GetCurrentFarmer(Game1.player)
-			);
+			HttpServer.routes.Post("/signin", AuthenticationController.SignIn);
+			HttpServer.routes.Get("/current-farmer", famerController.GetCurrentFarmer);
 		}
 	}
 }
