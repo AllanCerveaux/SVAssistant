@@ -15,18 +15,21 @@ namespace SVAssistant.Api
 		public string token { get; set; }
 	}
 
-	public static class Authentication
+	public class Authentication
 	{
-		public static Dictionary<string, string> GenerateCredential()
+		private static AsyncLocal<string> currentPassword = new AsyncLocal<string>();
+		public static string CurrentPassword
+		{
+			get => currentPassword.Value;
+			set => currentPassword.Value = value;
+		}
+
+		public static string GenerateCredential()
 		{
 			var generator = new PasswordGenerator.Password(8).Generate();
-			string password = Encryption.Hash(generator);
+			CurrentPassword = Encryption.Hash(generator);
 
-			return new Dictionary<string, string>
-			{
-				{ "raw", generator },
-				{ "password", password }
-			};
+			return generator;
 		}
 	}
 
@@ -46,7 +49,7 @@ namespace SVAssistant.Api
 
 			var isValid = Encryption.VerifyPassword(
 				signInBodyData.password,
-				ModEntry._cache["password"]
+				Authentication.CurrentPassword
 			);
 
 			try
