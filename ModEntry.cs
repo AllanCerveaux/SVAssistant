@@ -75,11 +75,7 @@ namespace SVAssistant
 			Game1.addHUDMessage(hUDMessage);
 
 			var credential = Authentication.GenerateCredential();
-			Game1.chatBox.addInfoMessage(
-				$"To connect API you can use this password {credential["raw"]}"
-			);
-
-			_cache.Add("password", credential["password"]);
+			Game1.chatBox.addInfoMessage($"To connect API you can use this password {credential}");
 		}
 
 		public void OnReturnToTitle(object? sender, ReturnedToTitleEventArgs eventArgs)
