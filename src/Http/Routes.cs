@@ -134,32 +134,9 @@ namespace SVAssistant.Http.Routes
 			}
 			else
 			{
-				// Handle not found
 				context.Response.StatusCode = 404;
 				await context.Response.OutputStream.WriteAsync(Encoding.UTF8.GetBytes("Not Found"));
 				context.Response.Close();
-			}
-		}
-
-		public static class RouteConfig
-		{
-			public static void RegisterRoutes(Routes routes)
-			{
-				routes.RegisterRoute(
-					new Route(
-						"/example",
-						HttpMethod.Get,
-						async (ctx) =>
-						{
-							// Logique de votre route
-							ctx.Response.StatusCode = 200;
-							await ctx.Response.OutputStream.WriteAsync(
-								Encoding.UTF8.GetBytes("Hello World")
-							);
-							ctx.Response.Close();
-						}
-					)
-				);
 			}
 		}
 	}
