@@ -17,7 +17,7 @@ namespace SVAssistant.Api
 	{
 		public static FarmerDTO GetFarmerDTO(long id)
 		{
-			Farmer farmer = Game1.getFarmer(id);
+			StardewValley.Farmer farmer = Game1.getFarmer(id);
 
 			return new FarmerDTO
 			{
