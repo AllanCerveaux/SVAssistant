@@ -17,7 +17,7 @@ namespace SVAssistant.Api
 	{
 		public static FarmerDTO GetFarmerDTO(long id)
 		{
-			StardewValley.Farmer farmer = Game1.getFarmer(id);
+			Farmer farmer = Game1.getFarmer(id);
 
 			return new FarmerDTO
 			{
@@ -42,9 +42,9 @@ namespace SVAssistant.Api
 		[Get("/get-current-farmer")]
 		public async Task GetCurrentFarmer()
 		{
+			// @TODO: create attribute to pass current user in request
 			var jwtHelper = ModEntry.ServiceProvider.GetService<IJwtHelper>();
 			var user = jwtHelper.GetPayloadFromJwt();
-			ModEntry.Logger.Log($"Farmer Controller: {user}", StardewModdingAPI.LogLevel.Info);
 			await Json(FarmerEntity.GetFarmerDTO(long.Parse(user.Sub)));
 		}
 	}
