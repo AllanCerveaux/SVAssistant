@@ -1,11 +1,7 @@
-using System.Reflection;
-using SVAssistant.Api;
-using SVAssistant.Http.Routes;
-
 namespace SVAssistant.Decorator
 {
-	[System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = true)]
-	public class RouteAttribute : System.Attribute
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+	public class RouteAttribute : Attribute
 	{
 		public string Path { get; }
 		public HttpMethod Method { get; }
