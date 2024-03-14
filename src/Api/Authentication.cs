@@ -1,7 +1,7 @@
 using System.Net;
-using System.Text.Json;
 using StardewValley;
-using SVAssistant.Rest;
+using SVAssistant.Decorator;
+using SVAssistant.Http.Routes;
 
 namespace SVAssistant.Api
 {
@@ -30,19 +30,22 @@ namespace SVAssistant.Api
 		}
 	}
 
-	public static class AuthenticationController
+	public class AuthenticationController : Controller
 	{
-		public static async Task SignIn(
-			RouteHttpRequest request,
-			RouteHttpResponse response,
-			HttpListenerContext? context
+		public AuthenticationController(
+			IHttpResponseService response,
+			IHttpRequestService request,
+			IRouteHandler route
 		)
+			: base(response, request, route) { }
+
+		[Post("/connect")]
+		public async Task SignIn()
 		{
-			var requestBody = request.ReadAsyncJsonBody();
-			var signInData = JsonSerializer.Deserialize<SignInDTO>(await requestBody);
+			var signInBodyData = await Request.ReadAsyncJsonBody<SignInDTO>();
 
 			var isValid = Encryption.VerifyPassword(
-				signInData.password,
+				signInBodyData.password,
 				ModEntry._cache["password"]
 			);
 
@@ -50,7 +53,10 @@ namespace SVAssistant.Api
 			{
 				if (!isValid)
 				{
-					await response.Error("Cannot find instance of game!");
+					await Response.Error(
+						"Cannot find instance of game!",
+						HttpStatusCode.BadRequest
+					);
 					return;
 				}
 
@@ -61,7 +67,7 @@ namespace SVAssistant.Api
 					Game1.player.IsMainPlayer.ToString()
 				);
 
-				await response.Json(new TokenDTO { token = token });
+				await Json(new TokenDTO { token = token });
 				return;
 			}
 			catch (Exception e)

@@ -1,24 +1,36 @@
 using System.Diagnostics;
-using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
+using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using SVAssistant.Api;
+using SVAssistant.Decorator;
 using SVAssistant.Framework;
-using SVAssistant.Rest;
+using SVAssistant.Http.Routes;
 
 namespace SVAssistant
 {
 	internal sealed class ModEntry : Mod
 	{
 		public static readonly Dictionary<string, string> _cache = new Dictionary<string, string>();
-		public static IMonitor Logger;
 		private ModConfig Config = null;
+		public static IMonitor Logger;
 		private HttpServer _httpServer;
+
+		private static AsyncLocal<ServiceProvider> _serviceProvider =
+			new AsyncLocal<ServiceProvider>();
+		public static ServiceProvider ServiceProvider
+		{
+			get => _serviceProvider.Value;
+			set => _serviceProvider.Value = value;
+		}
 
 		public override void Entry(IModHelper helper)
 		{
 			Logger = this.Monitor;
+			ServiceProvider = DependencyInjectionConfig.ConfigureServices();
 
 			helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
 			helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
@@ -47,15 +59,15 @@ namespace SVAssistant
 
 		private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
 		{
-			_httpServer = HttpServer.Instance;
 			this.Config = this.LoadConfig();
+
+			_httpServer = ServiceProvider.GetRequiredService<HttpServer>();
+			this.LoadApiRoutes();
 		}
 
 		public void OnSaveLoaded(object? sender, SaveLoadedEventArgs eventArgs)
 		{
 			_httpServer.Start();
-			this.LoadApiRoutes();
-
 			HUDMessage hUDMessage = new HUDMessage(
 				$"SVAssitant has running on {_httpServer.ServerUrl}",
 				3
@@ -86,9 +98,29 @@ namespace SVAssistant
 
 		public void LoadApiRoutes()
 		{
-			FamerController famerController = new FamerController();
-			HttpServer.routes.Post("/signin", AuthenticationController.SignIn);
-			HttpServer.routes.Get("/current-farmer", famerController.GetCurrentFarmer);
+			var routes = ServiceProvider.GetRequiredService<IRouteHandler>();
+			var controllers = ServiceProvider.GetServices<Controller>();
+			foreach (var controller in controllers)
+			{
+				var methods = controller
+					.GetType()
+					.GetMethods()
+					.Where(m => m.GetCustomAttributes<RouteAttribute>().Any());
+				foreach (var method in methods)
+				{
+					var attribute = method.GetCustomAttribute<RouteAttribute>();
+					routes.RegisterRoute(
+						new Route(
+							attribute.Path,
+							attribute.Method,
+							async (context) =>
+							{
+								await (Task)method.Invoke(controller, null);
+							}
+						)
+					);
+				}
+			}
 		}
 	}
 }

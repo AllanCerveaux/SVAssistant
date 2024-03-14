@@ -1,9 +1,7 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Net;
-using System.Security.Claims;
+using Microsoft.Extensions.DependencyInjection;
 using StardewValley;
 using SVAssistant.Decorator;
-using SVAssistant.Rest;
+using SVAssistant.Http.Routes;
 
 namespace SVAssistant.Api
 {
@@ -31,35 +29,23 @@ namespace SVAssistant.Api
 		}
 	}
 
-	public class FamerController
+	public class FamerController : Controller
 	{
-		[JWT]
-		public async Task<Task> GetCurrentFarmer(
-			RouteHttpRequest request,
-			RouteHttpResponse response,
-			HttpListenerContext? context
+		public FamerController(
+			IHttpResponseService response,
+			IHttpRequestService request,
+			IRouteHandler route
 		)
+			: base(response, request, route) { }
+
+		[JWT]
+		[Get("/get-current-farmer")]
+		public async Task GetCurrentFarmer()
 		{
-			var principal = Routes.Instance.header.ClaimPrincipal;
-			if (principal == null)
-			{
-				ModEntry.Logger.Log("SecurityToken is not set.", StardewModdingAPI.LogLevel.Info);
-				return response.Error("Unauthorized - Token not set.", HttpStatusCode.Unauthorized);
-			}
-
-			var subjectClaim =
-				principal.FindFirst(ClaimTypes.NameIdentifier)
-				?? principal.FindFirst(JwtRegisteredClaimNames.Sub);
-			if (subjectClaim == null)
-			{
-				ModEntry.Logger.Log("Subject claim is missing.", StardewModdingAPI.LogLevel.Info);
-				return response.Error(
-					"Unauthorized - JWT Mal Formatted",
-					HttpStatusCode.Unauthorized
-				);
-			}
-
-			return response.Json(FarmerEntity.GetFarmerDTO(long.Parse(subjectClaim.Value)));
+			var jwtHelper = ModEntry.ServiceProvider.GetService<IJwtHelper>();
+			var user = jwtHelper.GetPayloadFromJwt();
+			ModEntry.Logger.Log($"Farmer Controller: {user}", StardewModdingAPI.LogLevel.Info);
+			await Json(FarmerEntity.GetFarmerDTO(long.Parse(user.Sub)));
 		}
 	}
 }

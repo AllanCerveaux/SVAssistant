@@ -3,8 +3,9 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using SVAssistant;
+using SVAssistant.Http.Routes;
 
-public static class JsonWebToken
+public class JsonWebToken
 {
 	/// <summary>
 	/// Gets the secret key used for signing JWT tokens.
@@ -52,19 +53,19 @@ public static class JsonWebToken
 	/// </remarks>
 	public static ClaimsPrincipal? Verify(string token)
 	{
-		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
-		var tokenValidationParameters = new TokenValidationParameters
-		{
-			ValidateIssuerSigningKey = true,
-			IssuerSigningKey = key,
-			ValidateIssuer = false,
-			ValidateAudience = false,
-			ValidateLifetime = true,
-			ClockSkew = TimeSpan.Zero
-		};
-
 		try
 		{
+			var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+			var tokenValidationParameters = new TokenValidationParameters
+			{
+				ValidateIssuerSigningKey = true,
+				IssuerSigningKey = key,
+				ValidateIssuer = false,
+				ValidateAudience = false,
+				ValidateLifetime = true,
+				ClockSkew = TimeSpan.Zero
+			};
+
 			var tokenHandler = new JwtSecurityTokenHandler();
 			var principal = tokenHandler.ValidateToken(
 				token,
@@ -78,5 +79,29 @@ public static class JsonWebToken
 			ModEntry.Logger.Log($"JWT Verify: {svtex.Message}");
 			throw new SecurityTokenValidationException();
 		}
+	}
+}
+
+interface IJwtHelper
+{
+	JwtPayload GetPayloadFromJwt();
+}
+
+public class JwtHelper : IJwtHelper
+{
+	private IHttpRequestService Request;
+	private string token => Request.HeaderAuthorization.Replace("Bearer ", "");
+
+	public JwtHelper(IHttpRequestService request)
+	{
+		Request = request;
+	}
+
+	public JwtPayload GetPayloadFromJwt()
+	{
+		var tokenHandler = new JwtSecurityTokenHandler();
+		var jwtSecurityToken = tokenHandler.ReadJwtToken(token);
+
+		return jwtSecurityToken.Payload;
 	}
 }
