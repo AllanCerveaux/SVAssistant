@@ -7,7 +7,7 @@ namespace HttpServer.JWT
 	{
 		public static JwtPayload GetPayloadFromJwt()
 		{
-			var token = ServiceListenerRequestService.HeaderAuthorization;
+			var token = ServiceListenerRequestService.HeaderAuthorization.Replace("Bearer ", "");
 			var tokenHandler = new JwtSecurityTokenHandler();
 			var jwtSecurityToken = tokenHandler.ReadJwtToken(token);
 
