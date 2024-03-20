@@ -25,7 +25,6 @@ namespace HttpServer.Listener
 		private ServerListener(IRoutes routes)
 		{
 			_config = new ServerListenerConfig();
-			Console.WriteLine($"ServerListener: {_config.ServerUrl}");
 			ServerUrl = _config.ServerUrl;
 			_listener = new HttpListener { Prefixes = { $"{_config.ServerUrl}" } };
 
@@ -36,7 +35,6 @@ namespace HttpServer.Listener
 		{
 			if (_mainLoopTask != null && !_mainLoopTask.IsCompleted)
 				return;
-			Console.WriteLine($"Server start at port ${ServerUrl}");
 			_keepGoing = true;
 			_listener.Start();
 			_mainLoopTask = MainLoopAsync();

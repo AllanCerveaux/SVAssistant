@@ -30,20 +30,20 @@ namespace Compagnon
 		{
 			_server.Configure();
 			_server.LoadControllers();
-			_server.StartServer();
-			var credential = CredentialService.GenerateCredential();
-			Logger.Log($"Password: {credential}", LogLevel.Info);
 		}
 
 		private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
 		{
+			_server.StartServer();
+			var credential = CredentialService.GenerateCredential();
+			Logger.Log($"Password: {credential}", LogLevel.Info);
 			HUDMessage hUDMessage = new HUDMessage(
 				$"SVAssitant has running on {_server.ServerUrl}",
 				3
 			);
 			Game1.addHUDMessage(hUDMessage);
 
-			// Game1.chatBox.addInfoMessage($"Password to connect on app: {credential}");
+			Game1.chatBox.addInfoMessage($"Password to connect on app: {credential}");
 		}
 
 		private void OnReturnToTitle(object? sender, ReturnedToTitleEventArgs e)

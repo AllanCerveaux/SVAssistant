@@ -23,7 +23,6 @@ namespace Compagnon.Controllers
 		[Post("/connect")]
 		public async Task SignIn()
 		{
-			ModEntry.Logger.Log("Connection");
 			var signInBodyData = await Request.ReadAsyncJsonBody<SignInDTO>();
 
 			var isValid = Encryption.VerifyPassword(

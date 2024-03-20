@@ -74,6 +74,9 @@ namespace HttpServer
 			return Assembly.GetExecutingAssembly();
 		}
 
+		/// <summary>
+		/// @TODO: Move this logic into specific service
+		/// </summary>
 		public void LoadControllers()
 		{
 			var controllerTypes = GetAssembly()
@@ -82,14 +85,10 @@ namespace HttpServer
 					t.IsSubclassOf(typeof(Controller))
 					&& t.GetCustomAttribute<ControllableAttribute>() != null
 				);
-			Console.WriteLine($"Controller count {controllerTypes.Count()}");
 
 			foreach (var type in controllerTypes)
 			{
-				Console.WriteLine($"Controller {type}");
 				var controllerInstance = Activator.CreateInstance(type) as Controller;
-				Console.WriteLine($"Controller instance {controllerInstance.GetType()}");
-
 				var methodsToInvoke = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
 
 				foreach (var method in methodsToInvoke)
@@ -98,12 +97,10 @@ namespace HttpServer
 					var jwtAttribute = method.GetCustomAttribute<JWTAttribute>();
 					if (routeAttribute != null)
 					{
-						Console.WriteLine($"Route {routeAttribute.GetType()} - {method.Name}");
 						AsyncRouteAction action = () =>
 						{
 							if (jwtAttribute != null)
 							{
-								Console.WriteLine($"JWT {jwtAttribute.GetType()} - {method.Name}");
 								jwtAttribute.IsAuthorized();
 							}
 							var parameters = method.GetParameters();
