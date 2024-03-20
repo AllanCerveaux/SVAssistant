@@ -4,12 +4,7 @@ namespace HttpServer.Framework
 {
 	public class CredentialService
 	{
-		private static AsyncLocal<string> currentPassword = new AsyncLocal<string>();
-		public static string CurrentPassword
-		{
-			get => currentPassword.Value;
-			set => currentPassword.Value = value;
-		}
+		public static string CurrentPassword { get; private set; }
 
 		public static string GenerateCredential()
 		{

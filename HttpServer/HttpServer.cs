@@ -2,14 +2,22 @@
 using System.Reflection;
 using HttpServer.Framework;
 using HttpServer.Framework.Decorator;
+using HttpServer.JWT;
 using HttpServer.Listener;
 using HttpServer.Router;
+using Microsoft.IdentityModel.Tokens;
 using static HttpServer.Listener.ServerListenerContext;
 
 namespace HttpServer
 {
 	public class Server
 	{
+		private static AsyncLocal<string> currentPassword = new AsyncLocal<string>();
+		public static string CurrentPassword
+		{
+			get => currentPassword.Value;
+			set => currentPassword.Value = value;
+		}
 		private static readonly Lazy<Server> _instance = new Lazy<Server>(() => new Server());
 		public static Server Instance => _instance.Value;
 		private ServerListener? _listener;
@@ -66,17 +74,7 @@ namespace HttpServer
 			return Assembly.GetExecutingAssembly();
 		}
 
-		public IEnumerable<Type> GetControllers()
-		{
-			return GetAssembly()
-				.GetTypes()
-				.Where(t =>
-					t.IsSubclassOf(typeof(Controller))
-					&& t.GetCustomAttribute<ControllableAttribute>() != null
-				);
-		}
-
-		public async Task LoadControllers()
+		public void LoadControllers()
 		{
 			var controllerTypes = GetAssembly()
 				.GetTypes()
@@ -84,10 +82,13 @@ namespace HttpServer
 					t.IsSubclassOf(typeof(Controller))
 					&& t.GetCustomAttribute<ControllableAttribute>() != null
 				);
+			Console.WriteLine($"Controller count {controllerTypes.Count()}");
 
 			foreach (var type in controllerTypes)
 			{
+				Console.WriteLine($"Controller {type}");
 				var controllerInstance = Activator.CreateInstance(type) as Controller;
+				Console.WriteLine($"Controller instance {controllerInstance.GetType()}");
 
 				var methodsToInvoke = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
 
@@ -96,6 +97,7 @@ namespace HttpServer
 					var routeAttribute = method.GetCustomAttribute<RouteAttribute>();
 					if (routeAttribute != null)
 					{
+						Console.WriteLine($"Route {routeAttribute.GetType()} - {method.Name}");
 						AsyncRouteAction action = () =>
 							(Task)method.Invoke(controllerInstance, null);
 						Routes.Instance.RegisterRoute(
@@ -106,21 +108,4 @@ namespace HttpServer
 			}
 		}
 	}
-
-#if DEBUG
-	class Program
-	{
-		static void Main(string[] args)
-		{
-			Server server = Server.Instance;
-			server.Configure();
-			server.StartServer();
-
-			Console.WriteLine("Serveur démarré. Appuyez sur 'Enter' pour quitter.");
-			Console.ReadLine(); // Garde le serveur en cours d'exécution jusqu'à ce que 'Enter' soit pressé
-
-			server.StopServer();
-		}
-	}
-#endif
 }
