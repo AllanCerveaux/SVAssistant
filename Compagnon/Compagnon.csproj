@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+
+  <PropertyGroup>
+    <AssemblyName>Compagnon</AssemblyName>
+    <RootNamespace>Compagnon</RootNamespace>
+
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <Nullable>enable</Nullable>
+
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
+
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\HttpServer\HttpServer.csproj" />
+  </ItemGroup>
+  
+  <!-- Find a better way to do things differently -->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Copy SourceFiles="$(NuGetPackageRoot)/microsoft.identitymodel.tokens/7.4.1/lib/net6.0/Microsoft.IdentityModel.Tokens.dll" DestinationFolder="$(GameModsPath)/Compagnon/" />
+    <Copy SourceFiles="$(NuGetPackageRoot)/microsoft.identitymodel.abstractions/7.4.1/lib/net6.0/Microsoft.IdentityModel.Abstractions.dll" DestinationFolder="$(GameModsPath)/Compagnon/" />
+    <Copy SourceFiles="$(NuGetPackageRoot)/microsoft.identitymodel.logging/7.4.1/lib/net6.0/Microsoft.IdentityModel.Logging.dll" DestinationFolder="$(GameModsPath)/Compagnon/" />
+    <Copy SourceFiles="$(NuGetPackageRoot)/microsoft.identityModel.jsonWebTokens/7.4.1/lib/net6.0/Microsoft.IdentityModel.JsonWebTokens.dll" DestinationFolder="$(GameModsPath)/Compagnon/" />
+    <Copy SourceFiles="$(NuGetPackageRoot)/system.identitymodel.tokens.jwt/7.4.1/lib/net6.0/System.IdentityModel.Tokens.Jwt.dll" DestinationFolder="$(GameModsPath)/Compagnon/" />
+  </Target>
+</Project>
