@@ -95,17 +95,48 @@ namespace HttpServer
 				foreach (var method in methodsToInvoke)
 				{
 					var routeAttribute = method.GetCustomAttribute<RouteAttribute>();
+					var jwtAttribute = method.GetCustomAttribute<JWTAttribute>();
 					if (routeAttribute != null)
 					{
 						Console.WriteLine($"Route {routeAttribute.GetType()} - {method.Name}");
 						AsyncRouteAction action = () =>
-							(Task)method.Invoke(controllerInstance, null);
+						{
+							if (jwtAttribute != null)
+							{
+								Console.WriteLine($"JWT {jwtAttribute.GetType()} - {method.Name}");
+								jwtAttribute.IsAuthorized();
+							}
+							var parameters = method.GetParameters();
+							var args = new object[parameters.Length];
+							for (int i = 0; i < parameters.Length; i++)
+							{
+								var parameter = parameters[i];
+								var currentUserAttribute =
+									parameter.GetCustomAttributes<CurrentUserAttribute>();
+
+								if (currentUserAttribute != null)
+								{
+									args[i] = JwtHelper.GetPayloadFromJwt();
+								}
+								else
+								{
+									args[i] = GetDefaultValue(parameter.ParameterType);
+								}
+							}
+
+							return (Task)method.Invoke(controllerInstance, args);
+						};
 						Routes.Instance.RegisterRoute(
 							new Route(routeAttribute.Path, routeAttribute.Method, action)
 						);
 					}
 				}
 			}
+		}
+
+		public object GetDefaultValue(Type t)
+		{
+			return t.IsValueType ? Activator.CreateInstance(t) : null;
 		}
 	}
 }
