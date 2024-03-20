@@ -14,8 +14,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fody" Version="6.8.0" PrivateAssets="All" />
-    <PackageReference Include="MethodDecorator.Fody" Version="1.1.1" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.4.1" />
     <PackageReference Include="Microsoft.IdentityModel.Abstractions" Version="7.4.1" />
     <PackageReference Include="Microsoft.IdentityModel.Logging" Version="7.4.1" />
