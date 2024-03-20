@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -9,6 +8,7 @@ using SVAssistant.Api;
 using SVAssistant.Decorator;
 using SVAssistant.Framework;
 using SVAssistant.Http.Routes;
+using SVAssistant.Utils;
 
 namespace SVAssistant
 {
@@ -19,7 +19,7 @@ namespace SVAssistant
 		public static IMonitor Logger;
 		private HttpServer _httpServer;
 
-		private static AsyncLocal<ServiceProvider> _serviceProvider =
+		private static readonly AsyncLocal<ServiceProvider> _serviceProvider =
 			new AsyncLocal<ServiceProvider>();
 		public static ServiceProvider ServiceProvider
 		{
@@ -105,6 +105,9 @@ namespace SVAssistant
 				foreach (var method in methods)
 				{
 					var attribute = method.GetCustomAttribute<RouteAttribute>();
+					Logger.Log(
+						$"RegistedRoute for {controller.GetType()} - {method.Name} on {attribute.Path} - {attribute.Method}"
+					);
 					routes.RegisterRoute(
 						new Route(
 							attribute.Path,

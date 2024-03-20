@@ -3,6 +3,7 @@ using MethodDecorator.Fody.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using SVAssistant.Api;
 using SVAssistant.Http.Routes;
+using SVAssistant.Utils;
 
 namespace SVAssistant.Decorator
 {

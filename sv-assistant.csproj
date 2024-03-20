@@ -1,25 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <AssemblyName>SVAssistant</AssemblyName>
     <RootNamespace>SVAssistant</RootNamespace>
-    <TargetFramework>net5.0</TargetFramework>
-    <BundleExtraAssemblies>All</BundleExtraAssemblies>
+    <TargetFrameworks>netstandard2.0;net5.0;net6.0</TargetFrameworks>
+    
+    <!-- Configuration personnalisée, vérifiez sa nécessité -->
+    <BundleExtraAssemblies>ThirdParty</BundleExtraAssemblies>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
     <LangVersion>preview</LangVersion>
+
+    <PlatformTarget>AnyCPU</PlatformTarget>
+
+    
+    <!-- Définit où les packages NuGet sont restaurés -->
+    <RestorePackagesPath>./packages</RestorePackagesPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.4.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.4.0" />
+    <!-- Packages organisés alphabétiquement pour une meilleure lisibilité -->
+    <PackageReference Include="Fody" Version="6.8.0" PrivateAssets="All" />
     <PackageReference Include="MethodDecorator.Fody" Version="1.1.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
-    <PackageReference Include="Fody" Version="6.8.0">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.4.0" />
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.4.0" />
   </ItemGroup>
 </Project>

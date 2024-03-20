@@ -2,6 +2,7 @@ using System.Net;
 using StardewValley;
 using SVAssistant.Decorator;
 using SVAssistant.Http.Routes;
+using SVAssistant.Utils;
 
 namespace SVAssistant.Api
 {
@@ -26,7 +27,7 @@ namespace SVAssistant.Api
 
 		public static string GenerateCredential()
 		{
-			var generator = new PasswordGenerator.Password(8).Generate();
+			var generator = new Password(8).Generate();
 			CurrentPassword = Encryption.Hash(generator);
 
 			return generator;

@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace PasswordGenerator
+namespace SVAssistant.Utils
 {
 	/// <summary>
 	/// Defines the settings for password generation.

@@ -1,5 +1,3 @@
-using System.Net;
-using SVAssistant.Decorator;
 using SVAssistant.Http.Routes;
 
 namespace SVAssistant.Api
@@ -21,9 +19,16 @@ namespace SVAssistant.Api
 			Route = route;
 		}
 
-		protected Task Json(object data)
+		protected async Task Json(object data)
 		{
-			return Response.Json(data);
+			try
+			{
+				await Response.Json(data);
+			}
+			catch (Exception e)
+			{
+				ModEntry.Logger.Log($"{e.Message}", StardewModdingAPI.LogLevel.Error);
+			}
 		}
 	}
 }

@@ -4,11 +4,11 @@ namespace SVAssistant.Api
 {
 	public class JobsDTO
 	{
-		public int Miner { get; set; }
-		public int Combat { get; set; }
-		public int Farmer { get; set; }
-		public int Fisher { get; set; }
-		public int Forager { get; set; }
+		public int miner { get; set; }
+		public int combat { get; set; }
+		public int farmer { get; set; }
+		public int fisher { get; set; }
+		public int forager { get; set; }
 	}
 
 	internal static class Jobs
@@ -17,11 +17,11 @@ namespace SVAssistant.Api
 		{
 			return new JobsDTO
 			{
-				Miner = player.MiningLevel,
-				Combat = player.CombatLevel,
-				Fisher = player.FishingLevel,
-				Farmer = player.FarmingLevel,
-				Forager = player.ForagingLevel
+				miner = player.MiningLevel,
+				combat = player.CombatLevel,
+				fisher = player.FishingLevel,
+				farmer = player.FarmingLevel,
+				forager = player.ForagingLevel
 			};
 		}
 	}

@@ -2,15 +2,16 @@ using Microsoft.Extensions.DependencyInjection;
 using StardewValley;
 using SVAssistant.Decorator;
 using SVAssistant.Http.Routes;
+using SVAssistant.Utils;
 
 namespace SVAssistant.Api
 {
 	public class FarmerDTO
 	{
-		public string Name { get; set; }
-		public int Money { get; set; }
-		public JobsDTO Jobs { get; set; }
-		public List<AchievementDTO> Achievements { get; set; }
+		public string name { get; set; }
+		public int money { get; set; }
+		public JobsDTO jobs { get; set; }
+		public List<AchievementDTO> achievements { get; set; }
 	}
 
 	public static class FarmerEntity
@@ -18,13 +19,12 @@ namespace SVAssistant.Api
 		public static FarmerDTO GetFarmerDTO(long id)
 		{
 			StardewValley.Farmer farmer = Game1.getFarmer(id);
-
 			return new FarmerDTO
 			{
-				Name = farmer.Name,
-				Money = farmer.Money,
-				Jobs = Jobs.getPlayerJobs(farmer),
-				Achievements = Achievements.GetPlayerAchievement(farmer),
+				name = farmer.Name,
+				money = farmer.Money,
+				jobs = Jobs.getPlayerJobs(farmer),
+				achievements = Achievements.GetPlayerAchievement(farmer),
 			};
 		}
 	}

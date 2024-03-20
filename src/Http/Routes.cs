@@ -135,7 +135,8 @@ namespace SVAssistant.Http.Routes
 			else
 			{
 				context.Response.StatusCode = 404;
-				await context.Response.OutputStream.WriteAsync(Encoding.UTF8.GetBytes("Not Found"));
+				var buffer = Encoding.UTF8.GetBytes("Not Found");
+				context.Response.OutputStream.Write(buffer, 0, buffer.Length);
 				context.Response.Close();
 			}
 		}
