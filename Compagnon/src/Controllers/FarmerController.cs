@@ -1,89 +1,113 @@
 using System.IdentityModel.Tokens.Jwt;
 using HttpServer.Framework;
 using HttpServer.Framework.Decorator;
-using Netcode;
 using StardewValley;
 
 namespace Compagnon.Controllers
 {
 	internal class FarmerDTO
 	{
-		public string name { get; set; }
-		public int money { get; set; }
-		public int total_money_earned { get; set; }
-		public NetArray<int, NetInt> experiences { get; set; }
-		public FamerStatsDTO statistics { get; set; }
+		public string name { get; internal set; }
+		public int money { get; internal set; }
+		public uint total_money_earned { get; internal set; }
+		public string gender { get; internal set; }
+		public string farm_name { get; internal set; }
+		public string favorite_thing { get; internal set; }
+		public string horse_name { get; internal set; }
 	}
 
 	internal class FamerStatsDTO
 	{
-		public uint days_played { get; set; }
-		public uint times_unconscious { get; set; }
-		public uint times_fished { get; set; }
-		public uint average_bedtime { get; set; }
-		public int mine_level { get; set; }
-		public uint steps_taken { get; set; }
-		public uint notes_found { get; set; }
-		public uint pieces_of_trash_recycled { get; set; }
-		public uint preserves_made { get; set; }
-		public uint rabbit_wool_produced { get; set; }
-		public uint dirt_hoed { get; set; }
-		public uint stumps_chopped { get; set; }
-		public uint crops_shipped { get; set; }
-		public uint seeds_sown { get; set; }
-		public uint truffles_found { get; set; }
-		public uint cave_carrots_found { get; set; }
-		public uint cooper_found { get; set; }
-		public uint iron_found { get; set; }
-		public uint gold_found { get; set; }
-		public uint diamonds_found { get; set; }
-		public uint iridium_found { get; set; }
-		public uint other_precious_gems_found { get; set; }
-		public uint prismatic_shards_found { get; set; }
-		public uint stone_gathered { get; set; }
-		public uint mystic_stones_crushed { get; set; }
-		public uint rocks_crushed { get; set; }
-		public uint beverage_made { get; set; }
-		public uint cheese_made { get; set; }
-		public uint goat_cheese_made { get; set; }
-		public uint cow_milk_produced { get; set; }
-		public uint goat_milk_produced { get; set; }
-		public uint duck_eggs_layed { get; set; }
-		public uint chicken_eggs_layed { get; set; }
-		public uint sheep_wool_produced { get; set; }
-		public uint fish_caught { get; set; }
-		public uint geodes_cracked { get; set; }
-		public uint gifts_given { get; set; }
-		public uint good_friends { get; set; }
-		public uint quests_completed { get; set; }
-		public uint items_cooked { get; set; }
-		public uint items_crafted { get; set; }
-		public uint items_foraged { get; set; }
-		public uint items_shipped { get; set; }
-		public uint weeds_eliminated { get; set; }
-		public uint monsters_killed { get; set; }
-		public uint slimes_killed { get; set; }
+		public uint days_played { get; internal set; }
+		public uint times_unconscious { get; internal set; }
+		public uint times_fished { get; internal set; }
+		public uint average_bedtime { get; internal set; }
+		public int mine_level { get; internal set; }
+		public uint steps_taken { get; internal set; }
+		public uint notes_found { get; internal set; }
+		public uint pieces_of_trash_recycled { get; internal set; }
+		public uint preserves_made { get; internal set; }
+		public uint rabbit_wool_produced { get; internal set; }
+		public uint dirt_hoed { get; internal set; }
+		public uint stumps_chopped { get; internal set; }
+		public uint crops_shipped { get; internal set; }
+		public uint seeds_sown { get; internal set; }
+		public uint truffles_found { get; internal set; }
+		public uint cave_carrots_found { get; internal set; }
+		public uint cooper_found { get; internal set; }
+		public uint iron_found { get; internal set; }
+		public uint gold_found { get; internal set; }
+		public uint diamonds_found { get; internal set; }
+		public uint iridium_found { get; internal set; }
+		public uint other_precious_gems_found { get; internal set; }
+		public uint prismatic_shards_found { get; internal set; }
+		public uint stone_gathered { get; internal set; }
+		public uint mystic_stones_crushed { get; internal set; }
+		public uint rocks_crushed { get; internal set; }
+		public uint beverage_made { get; internal set; }
+		public uint cheese_made { get; internal set; }
+		public uint goat_cheese_made { get; internal set; }
+		public uint cow_milk_produced { get; internal set; }
+		public uint goat_milk_produced { get; internal set; }
+		public uint duck_eggs_layed { get; internal set; }
+		public uint chicken_eggs_layed { get; internal set; }
+		public uint sheep_wool_produced { get; internal set; }
+		public uint fish_caught { get; internal set; }
+		public uint geodes_cracked { get; internal set; }
+		public uint gifts_given { get; internal set; }
+		public uint good_friends { get; internal set; }
+		public uint quests_completed { get; internal set; }
+		public uint items_cooked { get; internal set; }
+		public uint items_crafted { get; internal set; }
+		public uint items_foraged { get; internal set; }
+		public uint items_shipped { get; internal set; }
+		public uint weeds_eliminated { get; internal set; }
+		public uint monsters_killed { get; internal set; }
+		public uint slimes_killed { get; internal set; }
+	}
+
+	internal class FarmerSkillLevelDTO
+	{
+		public int Minning { get; internal set; }
+		public int Fighting { get; internal set; }
+		public int Fishing { get; internal set; }
+		public int Farming { get; internal set; }
+		public int Foraging { get; internal set; }
+		public int Luck { get; internal set; }
+		public int Level { get; internal set; }
 	}
 
 	internal class FarmerEntity
 	{
-		public static FarmerDTO GetFarmer(long id)
-		{
-			Farmer farmer = Game1.getFarmer(id);
-			FamerStatsDTO statistics = GetFarmerStatistics(farmer.stats, farmer.deepestMineLevel);
+		private Farmer _farmer;
 
+		public FarmerEntity(long id)
+		{
+			_farmer = Game1.getFarmer(id);
+		}
+
+		public FarmerDTO GetFarmerInformation()
+		{
 			return new FarmerDTO
 			{
-				name = farmer.Name,
-				money = farmer.Money,
-				total_money_earned = (int)farmer.totalMoneyEarned,
-				experiences = farmer.experiencePoints,
-				statistics = statistics
+				name = _farmer.Name,
+				money = _farmer.Money,
+				total_money_earned = _farmer.totalMoneyEarned,
+				gender = _farmer.Gender.ToString(),
+				farm_name = _farmer.farmName.Value,
+				favorite_thing = _farmer.favoriteThing.Value,
+				horse_name = _farmer.horseName.Value
 			};
 		}
 
-		public static FamerStatsDTO GetFarmerStatistics(Stats stats, int mineLevel)
+		/// <summary>
+		/// @TODO: Improve this getter
+		/// </summary>
+		public FamerStatsDTO GetFarmerStatistics()
 		{
+			var stats = _farmer.stats;
+			var mineLevel = _farmer.deepestMineLevel;
+
 			return new FamerStatsDTO
 			{
 				days_played = stats.DaysPlayed,
@@ -134,6 +158,20 @@ namespace Compagnon.Controllers
 				slimes_killed = stats.SlimesKilled
 			};
 		}
+
+		public FarmerSkillLevelDTO GetFamerLevel()
+		{
+			return new FarmerSkillLevelDTO
+			{
+				Minning = _farmer.MiningLevel,
+				Fighting = _farmer.CombatLevel,
+				Fishing = _farmer.FishingLevel,
+				Farming = _farmer.FarmingLevel,
+				Foraging = _farmer.ForagingLevel,
+				Luck = _farmer.LuckLevel,
+				Level = _farmer.Level
+			};
+		}
 	}
 
 	[Controllable]
@@ -143,7 +181,8 @@ namespace Compagnon.Controllers
 		[Get("/me")]
 		public async Task GetCurrentFarmer([CurrentUser] JwtPayload payload)
 		{
-			await Json(FarmerEntity.GetFarmer(long.Parse(payload.Sub)));
+			var entity = new FarmerEntity(long.Parse(payload.Sub));
+			await Json(entity.GetFarmerInformation());
 		}
 	}
 }
