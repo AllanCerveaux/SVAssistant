@@ -12,6 +12,11 @@
 
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'($Configuration)' == 'Release'">
+      <EnableModDeploy>false</EnableModDeploy>
+      <EnableGameDebugging>false</EnableGameDebugging>
+  </PropertyGroup>
   
   <ItemGroup>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
