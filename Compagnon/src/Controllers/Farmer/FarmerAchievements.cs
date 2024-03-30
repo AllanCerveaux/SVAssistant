@@ -35,9 +35,7 @@ namespace Compagnon.Controllers
 			var originalStatus = bool.Parse(parts[2]);
 			var previousId = int.Parse(parts[3]);
 			var nextId = int.Parse(parts[4]);
-			var isUnlocked = GameStateQuery.CheckConditions(
-				$"PLAYER HAS ACHIEVEMENT {_farmer} {id}"
-			);
+			var isUnlocked = GameStateQuery.CheckConditions($"PLAYER_HAS_ACHIEVEMENT Current {id}");
 
 			return new FarmerAchievementDTO
 			{

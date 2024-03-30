@@ -24,7 +24,7 @@ namespace Compagnon.Controllers
 				horse_name = _farmer.horseName.Value,
 				skills = GetFamerSkillWithProfessions(),
 				statistics = GetFarmerStatistics(),
-				achievements = new FarmerAchievementsEntity(_farmer).GetAll()
+				achievements = GetFarmerAchievements()
 			};
 		}
 
@@ -96,6 +96,11 @@ namespace Compagnon.Controllers
 				skillWithProfessions.Add(whichSkillWithProfessions.Get());
 			}
 			return skillWithProfessions;
+		}
+
+		public List<FarmerAchievementDTO> GetFarmerAchievements()
+		{
+			return new FarmerAchievementsEntity(_farmer).GetAll();
 		}
 	}
 }
