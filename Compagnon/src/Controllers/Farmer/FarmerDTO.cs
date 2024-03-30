@@ -11,6 +11,7 @@ namespace Compagnon.Controllers
 		public string horse_name { get; internal set; }
 		public FamerStatsDTO statistics { get; internal set; }
 		public List<FarmerSkillDTO> skills { get; internal set; }
+		public object achievements { get; internal set; }
 	}
 
 	internal class FamerStatsDTO
@@ -68,5 +69,23 @@ namespace Compagnon.Controllers
 		public int level { get; internal set; }
 		public string name { get; internal set; }
 		public List<ProfessionDTO> professions { get; internal set; }
+	}
+
+	public class ProfessionDTO
+	{
+		public string title { get; internal set; }
+		public string description { get; internal set; }
+		public bool unlock { get; internal set; }
+	}
+
+	public class FarmerAchievementDTO
+	{
+		public int id { get; internal set; }
+		public string name { get; internal set; }
+		public string description { get; internal set; }
+		public bool originalStatus { get; internal set; }
+		public int previousId { get; internal set; }
+		public int nextId { get; internal set; }
+		public bool isUnlocked { get; internal set; }
 	}
 }

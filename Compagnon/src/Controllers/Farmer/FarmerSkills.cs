@@ -3,13 +3,6 @@ using StardewValley.Menus;
 
 namespace Compagnon.Controllers
 {
-	public class ProfessionDTO
-	{
-		public string title { get; internal set; }
-		public string description { get; internal set; }
-		public bool unlock { get; internal set; }
-	}
-
 	public class FarmerSkillEntity
 	{
 		private Farmer _farmer;

@@ -23,7 +23,8 @@ namespace Compagnon.Controllers
 				favorite_thing = _farmer.favoriteThing.Value,
 				horse_name = _farmer.horseName.Value,
 				skills = GetFamerSkillWithProfessions(),
-				statistics = GetFarmerStatistics()
+				statistics = GetFarmerStatistics(),
+				achievements = new FarmerAchievementsEntity(_farmer).GetAll()
 			};
 		}
 
